@@ -1,0 +1,6 @@
+innovus.cmd*
+innovus.log*
+innovus_temp_*/
+.xdg_runtime_*/
+runs/
+scripts/__pycache__/

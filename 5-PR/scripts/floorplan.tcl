@@ -1,0 +1,6 @@
+if {$::FLOORPLAN_DEF ne ""} {
+  defIn $::FLOORPLAN_DEF
+} else {
+  floorPlan -site $::CORE_SITE -r $::CORE_ASPECT_RATIO $::CORE_UTILIZATION \
+    $::CORE_MARGIN $::CORE_MARGIN $::CORE_MARGIN $::CORE_MARGIN
+}
