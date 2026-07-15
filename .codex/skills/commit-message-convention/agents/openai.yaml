@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Message Convention"
+  short_description: "Enforce project commit message types"
+  default_prompt: "Use $commit-message-convention to draft or review a commit message for this repository."

@@ -24,21 +24,21 @@
 # 			"    
 # ]
 
-set_dont_use [get_lib_cell \
-	" */DEL* \
-		*/*FILL* \
-		*/F_DIODE* \
-		*/PULL* \
-		*/CLK* \
-		*/*V20_140P7T* \
-		*/*V24_140P7T* \
-		*/*V32_140P7T* \
-		*/*V40_140P7T* \
-		*/*V48_140P7T* \
-		*/INV1_140P7T* \
-		*/INV1P5_140P7T* \
-		*/INV2_140P7T* \
-		*/AOI22V1_* \
-		*/OAI32V2_*  \
-		*/TBUF* \
-" ]
+# set_dont_use [get_lib_cell \
+# 	" */DEL* \
+# 		*/*FILL* \
+# 		*/F_DIODE* \
+# 		*/PULL* \
+# 		*/CLK* \
+# 		*/*V20_140P7T* \
+# 		*/*V24_140P7T* \
+# 		*/*V32_140P7T* \
+# 		*/*V40_140P7T* \
+# 		*/*V48_140P7T* \
+# 		*/INV1_140P7T* \
+# 		*/INV1P5_140P7T* \
+# 		*/INV2_140P7T* \
+# 		*/AOI22V1_* \
+# 		*/OAI32V2_*  \
+# 		*/TBUF* \
+# " ]

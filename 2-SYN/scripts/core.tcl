@@ -1,4 +1,4 @@
-set TOP_MODULE  RocketTileMeek
+set TOP_MODULE  multiplier_pipe3
 
 set_host_options -max_cores 16
 set compile_enable_register_merging    true
@@ -14,23 +14,14 @@ set compile_disable_hierarchical_inverter_opt true
 set auto_insert_level_shifters_on_clocks      all
 set auto_insert_level_shifters true
 # set hdlin_verilog_defines [list "SYNTHESIS"]
-set file_handle [open "/home/gb123/EDA_DOCKER/ic_workbench/0-RTL/CPU/1/filelist.f" r]
+# set file_handle [open "/home/gb123/EDA_DOCKER/ic_workbench/0-RTL/CPU/1/filelist.f" r]
 
-set MY_HDL_FILES [split [read $file_handle] "\n"]
-
-close $file_handle
-
-
-
-# set file_handle [open "/home/gb515897968/ic_workbench/0-RTL/CPU/gen-collateral/firrtl_black_box_resource_files.f" r]
-
-# set MY_BLACKBOX_FILES [split [read $file_handle] "\n"]
+# set MY_HDL_FILES [split [read $file_handle] "\n"]
 
 # close $file_handle
 
-set ALL_HDL_FILES  $MY_HDL_FILES
-# set ALL_HDL_FILES  /data2/EDA_DOCKER/ic_workbench/0-RTL/CPU/shift.v
-# [concat $MY_HDL_FILES $MY_BLACKBOX_FILES]
+set ALL_HDL_FILES  /data1/GB/ic_workbench/0-RTL/multi.v
+
 set hdlin_verilog_defines [list "SYNTHESIS"]
 
 analyze -format sverilog $ALL_HDL_FILES  -define DC_SYN
@@ -70,8 +61,6 @@ source -e -v ./scripts/set_dont_use.tcl
 
 check_timing
 ###set_max_area 0
-group_path -name INPUT_GROUP -from [all_inputs ]
-group_path -name OUTPUT_GROUP -to  [all_outputs]
 #
 source -e -v ./scripts/operation_conditions.tcl
 #set upf_create_implicit_supply_sets false
@@ -121,8 +110,31 @@ check_timing                                              > ./rpt/$data/${TOP_MO
 report_timing_requirements                                > ./rpt/$data/${TOP_MODULE}_report_timing_requirements.rpt
 report_timing -transition_time -nets -attributes -nosplit > ./rpt/$data/${TOP_MODULE}_mapped_timing.rpt
 report_area -physical -nosplit -hierarchy                 > ./rpt/$data/${TOP_MODULE}_mapped_area.rpt
-report_power -hierarchy                                             > ./rpt/$data/${TOP_MODULE}_power.rpt
+report_power -hierarchy                                   > ./rpt/$data/${TOP_MODULE}_power.rpt
 report_cell                                               > ./rpt/$data/${TOP_MODULE}_cell.rpt
-report_timing  -delay max -max_paths 50                   > ./rpt/$data/${TOP_MODULE}_timing_max_path.rpt
-report_timing -delay min -max_paths 50                    > ./rpt/$data/${TOP_MODULE}_timing_min_path.rpt
+foreach path_group {I2R R2R R2O I2O} {
+    report_timing \
+        -group $path_group \
+        -delay max \
+        -path_type full \
+        -max_paths 1000 \
+        -transition_time \
+        -nets \
+        -attributes \
+        -nosplit \
+        > ./rpt/$data/${TOP_MODULE}_${path_group}_setup.rpt
+}
+
+report_qor -significant_digits 4 \
+      > ./rpt/$data/${TOP_MODULE}_qor.rpt
+foreach path_group {I2R R2R R2O I2O} {
+    report_logic_levels \
+        -group $path_group \
+        -max_paths 10000 \
+        -max_paths_to_report 500 \
+        -num_bins 20 \
+        -nosplit \
+        > ./rpt/$data/${TOP_MODULE}_${path_group}_logic_levels.rpt
+}
+
 report_reference                                          > ./rpt/$data/${TOP_MODULE}_ref.rpt

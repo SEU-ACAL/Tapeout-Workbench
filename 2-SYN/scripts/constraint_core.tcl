@@ -33,9 +33,7 @@ set_clock_uncertainty [expr $PAD_cpu_clock_period * 0.3]        [get_clocks cloc
 # Transition设置 (period的10%)
 
 set_clock_transition  [expr $PAD_cpu_clock_period * 0.1]        [get_clocks clock]
-set_clock_transition [expr $PAD_cpu_serial_clock_period * 0.1]        [get_clocks serial_tl_0_clock_in]
-set_clock_transition [expr $PAD_cpu_jtag_clock_period * 0.1]        [get_clocks jtag_TCK]
-set_clock_transition  [expr $clk_pll_cpu_period * 0.1]          [get_clocks clk_pll_cpu]
+
 
 # Input/Output Delay设置 (period的70%)
 

@@ -9,8 +9,8 @@ set timing_enable_multiple_clocks_per_reg true
 
 
 set search_path [list /home/gb123/EDA_DOCKER/ic_workbench/0-RTL/CPU/1]
-# 使用12t ss corner
-set target_library   "/home/gb123/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v76.lib"
+# 使用7t ss corner
+set target_library   "/data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140lvt_180a/tcbn28hpcplusbwp7t40p140lvtssg0p81v125c_ccs.db"
 
 # set target_library   " scc28nhkcp_hdc35p140_rvt_ffg_v0p99_0c_ccs.db \
 # 					"

@@ -1,0 +1,39 @@
+# Local editor and operating-system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Simulation products
+simv
+simv.daidir/
+csrc/
+DVEfiles/
+verdiLog/
+work/
+*.fsdb
+*.vcd
+*.vpd
+*.key
+
+# Design Compiler synthesis products
+2-SYN/alib-*/
+2-SYN/command.log
+2-SYN/default.svf
+2-SYN/elab/
+2-SYN/log/
+2-SYN/outputs/
+2-SYN/rpt/
+
+# PrimeTime and Formality generated results
+4-Pre_PR_STA_POWER/log/
+4-Pre_PR_STA_POWER/outputs/
+4-Pre_PR_STA_POWER/rpt/
+FM/log/
+FM/outputs/
+FM/rpt/
+FM/work/
+FM/*.log
