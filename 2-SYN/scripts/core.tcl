@@ -39,7 +39,7 @@ current_design  $TOP_MODULE
 link
 
 ###
-source -e -v ./scripts/constraint_tmp.tcl
+source -e -v ./scripts/constraint_core.tcl
 
 # set my_net [get_nets -of_objects [get_pins {system/chipyard_prcictrl_domain/clockSelector/allClocks_uncore_clkmux/io_clockOut}]]
 # if { $my_net != "" } {
