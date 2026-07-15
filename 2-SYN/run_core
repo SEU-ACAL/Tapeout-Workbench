@@ -1,0 +1,8 @@
+#! /bin/sh
+rm -f ./alib-52/*
+rm -f ./elab/*
+log_date=$(date +%m%d)_$(date +%H%M)
+mkdir outputs/$log_date
+mkdir rpt/$log_date
+#/usr/eda/synopsys/syn_J201409SP3/bin/dc_shell-t -f ./scripts/core.tcl -x "set data ${log_date}" | tee ./log/core_${log_date}.log
+dc_shell -f ./scripts/core.tcl -x "set data ${log_date}" | tee ./log/core_${log_date}.log

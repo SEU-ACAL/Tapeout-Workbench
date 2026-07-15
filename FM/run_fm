@@ -1,0 +1,20 @@
+#! /bin/sh
+log_date=$(date +%m%d)_$(date +%H%M)
+
+if [ ! -d "rpt" ];then
+	mkdir rpt
+fi
+
+if [ ! -d "logs" ];then
+	mkdir logs
+fi
+
+if [ ! -d "outputs" ];then
+	mkdir outputs
+fi
+
+mkdir ./outputs/${log_date}
+mkdir ./rpt/${log_date}
+
+
+fm_shell -f ./scripts/fm.tcl -x "set run_date ${log_date}" | tee ./logs/${log_date}.log	
