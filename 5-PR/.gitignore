@@ -1,6 +1,9 @@
 innovus.cmd*
 innovus.log*
+flowtool.log*
 innovus_temp_*/
 .xdg_runtime_*/
 runs/
+outputs/
+reports/
 scripts/__pycache__/

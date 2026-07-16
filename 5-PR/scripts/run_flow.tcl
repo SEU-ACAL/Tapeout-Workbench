@@ -18,6 +18,11 @@
 # Flow Setup
 ################################################################################
 
+#- Remove log and command artifacts from previous flow runs.
+set pr_root [file normalize [file join [file dirname [info script]] ..]]
+exec find $pr_root -type f \( -iname *.log -o -iname *.cmd \) -delete
+unset pr_root
+
 #- Setup canonical flow path
 define_flowkit_db flow_report_name \
   -data_type string \

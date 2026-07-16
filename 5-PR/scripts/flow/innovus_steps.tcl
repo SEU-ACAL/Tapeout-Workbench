@@ -36,6 +36,40 @@ place_opt_design -out_dir debug -prefix [get_flowkit_db flow_report_name]
 # STEP add_clock_spec
 ##############################################################################
 create_flow_step -name add_clock_spec -owner cadence {
+  set pr_clock_ports [get_ports -quiet $::PR_CLOCK_PORT]
+  if {$pr_clock_ports eq ""} {
+    error "CTS precheck failed: clock port '$::PR_CLOCK_PORT' was not found"
+  }
+  if {[get_clocks -quiet *] eq ""} {
+    error "CTS precheck failed: no clocks are defined"
+  }
+  puts "PR_CTS_PRECHECK clock_port=$::PR_CLOCK_PORT clocks=[get_clocks -quiet *]"
+  set pr_cts_dir [file join $::PR_ROOT reports cts]
+  file mkdir $pr_cts_dir
+  # Innovus releases differ in how ideal nets are exposed.  Prefer the
+  # dedicated report command when available; otherwise record the nets
+  # directly connected to the declared clock port.
+  set pr_ideal_report_path [file join $pr_cts_dir ideal_nets.prects.rpt]
+  if {[llength [info commands report_ideal_nets]] > 0} {
+    if {[catch {redirect -file $pr_ideal_report_path {report_ideal_nets}} pr_ideal_err]} {
+      error "CTS precheck failed: unable to generate ideal-net report: $pr_ideal_err"
+    }
+    set pr_ideal_report [open $pr_ideal_report_path r]
+    set pr_ideal_nets [string trim [read $pr_ideal_report]]
+    close $pr_ideal_report
+  } else {
+    set pr_ideal_nets [get_nets -quiet -of_objects $pr_clock_ports]
+    if {$pr_ideal_nets eq ""} {
+      error "CTS precheck failed: no net is connected to clock port '$::PR_CLOCK_PORT'"
+    }
+    set pr_ideal_report [open $pr_ideal_report_path w]
+    puts $pr_ideal_report "ideal_nets=$pr_ideal_nets"
+    close $pr_ideal_report
+  }
+  if {$pr_ideal_nets eq ""} {
+    error "CTS precheck failed: ideal-net report was empty"
+  }
+
   #- automatically create clock spec if one is not available
   if {[llength [get_ccopt_clock_tree_sinks  *]] == 0} {
     create_ccopt_clock_tree_spec
@@ -43,6 +77,12 @@ create_flow_step -name add_clock_spec -owner cadence {
     puts "INFO: reusing existing clock tree spec"
     puts "        to reload a new one use 'delete_clock_tree_spec' and 'read_ccopt_config"
   }
+
+  set pr_clock_sinks [get_ccopt_clock_tree_sinks *]
+  if {[llength $pr_clock_sinks] == 0} {
+    error "CTS precheck failed: clock tree spec has no sinks"
+  }
+  puts "PR_CTS_PRECHECK clock_tree_sinks=[llength $pr_clock_sinks] ideal_clock_source=$::PR_CLOCK_PORT"
 }
 
 ##############################################################################
@@ -55,6 +95,24 @@ create_flow_step -name add_clock_tree -owner cadence {
   } else {
     ccopt_design -outDir debug -prefix [get_flowkit_db flow_report_name]
   }
+
+  set pr_cts_dir [file join $::PR_ROOT reports cts]
+  file mkdir $pr_cts_dir
+  report_clock_timing -type summary > [file join $pr_cts_dir clock.summary.rpt]
+  report_clock_timing -type latency > [file join $pr_cts_dir clock.latency.rpt]
+  report_clock_timing -type skew > [file join $pr_cts_dir clock.skew.rpt]
+  report_constraint -all_violators > [file join $pr_cts_dir clock.drv.rpt]
+
+  set pr_cts_report [open [file join $pr_cts_dir clock.drv.rpt] r]
+  set pr_cts_text [read $pr_cts_report]
+  close $pr_cts_report
+  if {[regexp -nocase {(^|[^a-z])(max[_ ]?(fanout|transition|capacitance)|fanout|transition)[^\n]*(violated|violation)} $pr_cts_text]} {
+    error "CTS postcheck failed: unresolved clock fanout/DRV violation; see [file join $pr_cts_dir clock.drv.rpt]"
+  }
+  if {[regexp -nocase {(disconnected|unrouted)[^\n]*(clock|net)|(clock|net)[^\n]*(disconnected|unrouted)} $pr_cts_text]} {
+    error "CTS postcheck failed: disconnected or unrouted clock net; see [file join $pr_cts_dir clock.drv.rpt]"
+  }
+  puts "PR_CTS_POSTCHECK status=pass clock_fanout_drv=clean"
 }
 
 ##############################################################################
@@ -158,7 +216,6 @@ create_flow_step -name schedule_report_floorplan -owner cadence -exclude_time_me
   schedule_flow \
     -flow report_floorplan  \
     -branch [get_flowkit_db flow_branch] \
-    -no_sync \
     -include_in_metrics
 }
 
@@ -169,7 +226,6 @@ create_flow_step -name schedule_report_prects -owner cadence -exclude_time_metri
   schedule_flow \
     -flow report_prects  \
     -branch [get_flowkit_db flow_branch] \
-    -no_sync \
     -include_in_metrics
 }
 
@@ -180,7 +236,6 @@ create_flow_step -name schedule_report_postcts -owner cadence -exclude_time_metr
   schedule_flow \
     -flow report_postcts  \
     -branch [get_flowkit_db flow_branch] \
-    -no_sync \
     -include_in_metrics
 }
 
@@ -191,7 +246,6 @@ create_flow_step -name schedule_report_postroute -owner cadence -exclude_time_me
   schedule_flow \
     -flow report_postroute  \
     -branch [get_flowkit_db flow_branch] \
-    -no_sync \
     -include_in_metrics
 }
 

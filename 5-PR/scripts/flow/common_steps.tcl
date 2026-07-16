@@ -93,6 +93,5 @@ create_flow_step -name schedule_sta -owner cadence -skip_metric {
     -flow sta \
     -branch [get_flowkit_db flow_branch] \
     -db [file join [get_flowkit_db flow_db_directory] [get_flowkit_db flow_report_name] init_sta.tcl] \
-    -include_in_metrics \
-    -no_sync
+    -include_in_metrics
 }
