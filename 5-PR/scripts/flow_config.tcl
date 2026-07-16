@@ -22,7 +22,7 @@ create_flow_step -name write_outputs -owner design -write_db {
   set out_dir [file join $::PR_ROOT outputs]
   file mkdir $out_dir
   saveNetlist -topModuleFirst -topCell $::TOP_MODULE [file join $out_dir $::TOP_MODULE.v]
-  write_def [file join $out_dir $::TOP_MODULE.def]
+  defOut [file join $out_dir $::TOP_MODULE.def]
   rcOut -spef [file join $out_dir $::TOP_MODULE.spef]
 }
 

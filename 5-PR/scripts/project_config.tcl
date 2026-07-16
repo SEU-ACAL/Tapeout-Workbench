@@ -3,7 +3,7 @@
 set ::PR_ROOT [file normalize [file join [file dirname [info script]] ..]]
 set ::TOP_MODULE multiplier_pipe3
 set ::NETLIST [file join $::PR_ROOT .. 2-SYN outputs 0715_0544 multiplier_pipe3.v]
-set ::SDC [file join $::PR_ROOT .. 2-SYN outputs 0715_0544 multiplier_pipe3.sdc]
+set ::SDC [file join $::PR_ROOT scripts constraint_pr.sdc]
 
 set ::CELL_LEF /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/lef/tcbn28hpcplusbwp7t40p140lvt.lef
 set ::SITE_LEF [file join $::PR_ROOT scripts core7T.lef]
