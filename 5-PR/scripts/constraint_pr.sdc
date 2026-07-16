@@ -2,6 +2,8 @@
 # timing budget must be confirmed with the block interface owner.
 source $::PR_UPSTREAM_SDC
 
+reset_ideal_network [get_ports $::PR_CLOCK_PORT]
+
 set_clock_uncertainty -setup 2.0 [get_clocks clock]
 set_clock_uncertainty -hold 0.2 [get_clocks clock]
 set_clock_transition -max 0.5 [get_clocks clock]

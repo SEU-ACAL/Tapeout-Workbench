@@ -43,32 +43,16 @@ create_flow_step -name add_clock_spec -owner cadence {
   if {[get_clocks -quiet *] eq ""} {
     error "CTS precheck failed: no clocks are defined"
   }
+  set pr_active_constraint_modes [all_constraint_modes -active]
+  if {$pr_active_constraint_modes eq ""} {
+    error "CTS precheck failed: no active constraint mode is available to clear ideal clock constraints"
+  }
+  set_interactive_constraint_modes $pr_active_constraint_modes
+  reset_ideal_network $pr_clock_ports
+  set_interactive_constraint_modes {}
   puts "PR_CTS_PRECHECK clock_port=$::PR_CLOCK_PORT clocks=[get_clocks -quiet *]"
   set pr_cts_dir [file join $::PR_ROOT reports cts]
   file mkdir $pr_cts_dir
-  # Innovus releases differ in how ideal nets are exposed.  Prefer the
-  # dedicated report command when available; otherwise record the nets
-  # directly connected to the declared clock port.
-  set pr_ideal_report_path [file join $pr_cts_dir ideal_nets.prects.rpt]
-  if {[llength [info commands report_ideal_nets]] > 0} {
-    if {[catch {redirect -file $pr_ideal_report_path {report_ideal_nets}} pr_ideal_err]} {
-      error "CTS precheck failed: unable to generate ideal-net report: $pr_ideal_err"
-    }
-    set pr_ideal_report [open $pr_ideal_report_path r]
-    set pr_ideal_nets [string trim [read $pr_ideal_report]]
-    close $pr_ideal_report
-  } else {
-    set pr_ideal_nets [get_nets -quiet -of_objects $pr_clock_ports]
-    if {$pr_ideal_nets eq ""} {
-      error "CTS precheck failed: no net is connected to clock port '$::PR_CLOCK_PORT'"
-    }
-    set pr_ideal_report [open $pr_ideal_report_path w]
-    puts $pr_ideal_report "ideal_nets=$pr_ideal_nets"
-    close $pr_ideal_report
-  }
-  if {$pr_ideal_nets eq ""} {
-    error "CTS precheck failed: ideal-net report was empty"
-  }
 
   #- automatically create clock spec if one is not available
   if {[llength [get_ccopt_clock_tree_sinks  *]] == 0} {
@@ -96,8 +80,20 @@ create_flow_step -name add_clock_tree -owner cadence {
     ccopt_design -outDir debug -prefix [get_flowkit_db flow_report_name]
   }
 
+  set pr_active_constraint_modes [all_constraint_modes -active]
+  if {$pr_active_constraint_modes eq ""} {
+    error "CTS postcheck failed: no active constraint mode is available to propagate clocks"
+  }
+  set_interactive_constraint_modes $pr_active_constraint_modes
+  set_propagated_clock [get_clocks *]
+  set_interactive_constraint_modes {}
   set pr_cts_dir [file join $::PR_ROOT reports cts]
   file mkdir $pr_cts_dir
+  set pr_cts_sinks [get_ccopt_clock_tree_sinks *]
+  if {[llength $pr_cts_sinks] == 0} {
+    error "CTS postcheck failed: no clock tree sinks are available for propagation report"
+  }
+  report_clock_propagation -clock [get_clocks *] -to $pr_cts_sinks -verbose > [file join $pr_cts_dir clock.propagation.rpt]
   report_clock_timing -type summary > [file join $pr_cts_dir clock.summary.rpt]
   report_clock_timing -type latency > [file join $pr_cts_dir clock.latency.rpt]
   report_clock_timing -type skew > [file join $pr_cts_dir clock.skew.rpt]
@@ -112,7 +108,21 @@ create_flow_step -name add_clock_tree -owner cadence {
   if {[regexp -nocase {(disconnected|unrouted)[^\n]*(clock|net)|(clock|net)[^\n]*(disconnected|unrouted)} $pr_cts_text]} {
     error "CTS postcheck failed: disconnected or unrouted clock net; see [file join $pr_cts_dir clock.drv.rpt]"
   }
-  puts "PR_CTS_POSTCHECK status=pass clock_fanout_drv=clean"
+  set pr_latency_report [open [file join $pr_cts_dir clock.latency.rpt] r]
+  set pr_latency_text [read $pr_latency_report]
+  close $pr_latency_report
+  set pr_network_latency_values [regexp -all -inline {\n\s*[0-9.]+\s+([0-9.]+)\s+[0-9.]+\s+[rvf]\s+\S+} $pr_latency_text]
+  set pr_has_network_latency false
+  foreach {match pr_network_latency} $pr_network_latency_values {
+    if {$pr_network_latency > 0.0} {
+      set pr_has_network_latency true
+      break
+    }
+  }
+  if {!$pr_has_network_latency} {
+    error "CTS postcheck failed: clock network latency is zero; verify ideal-clock constraints and CTS implementation"
+  }
+  puts "PR_CTS_POSTCHECK status=pass clock_fanout_drv=clean propagated_clock=true"
 }
 
 ##############################################################################
