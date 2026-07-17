@@ -13,31 +13,49 @@ foreach rc_corner {rc_worst rc_best c_worst c_best rc_typical} {
 }
 
 ##############################################################################
-## DELAY CORNERS
-##############################################################################
-create_delay_corner -name dc_setup -library_set lib_ss -rc_corner rc_worst
-create_delay_corner -name dc_hold  -library_set lib_ff -rc_corner rc_best
-
-##############################################################################
 ## CONSTRAINT MODES
 ##############################################################################
 create_constraint_mode -name func -sdc_files [list $::SDC]
 
 ##############################################################################
-## ANALYSIS VIEWS
+## DELAY CORNERS AND ANALYSIS VIEWS
 ##############################################################################
-create_analysis_view -name view_setup -constraint_mode func -delay_corner dc_setup
-create_analysis_view -name view_hold -constraint_mode func -delay_corner dc_hold
+set pr_setup_views {}
+set pr_hold_views {}
+foreach spec $::PR_MMMC_VIEW_SPECS {
+  lassign $spec view library_set rc_corner check_type
+  if {$check_type ni {setup hold}} {
+    error "Invalid MMMC check type '$check_type' for view '$view'"
+  }
+  if {![dict exists $::QRC_TECH_FILES $rc_corner]} {
+    error "MMMC view '$view' references an undefined RC corner '$rc_corner'"
+  }
+  if {![dict exists $::PR_LIBRARY_PVT $library_set]} {
+    error "MMMC view '$view' references an undefined library PVT '$library_set'"
+  }
+
+  set delay_corner dc_$view
+  create_delay_corner -name $delay_corner -library_set $library_set -rc_corner $rc_corner
+  create_analysis_view -name $view -constraint_mode func -delay_corner $delay_corner
+  if {$check_type eq "setup"} {
+    lappend pr_setup_views $view
+  } else {
+    lappend pr_hold_views $view
+  }
+}
+
+if {[llength $pr_setup_views] == 0 || [llength $pr_hold_views] == 0} {
+  error "MMMC configuration must define at least one setup and one hold view"
+}
 
 ##############################################################################
 ## ACTIVE VIEWS
 ##############################################################################
-set_analysis_view -setup {view_setup} -hold {view_hold}
+set_analysis_view -setup $pr_setup_views -hold $pr_hold_views
 
-foreach {view lib voltage temperature rc_corner} {
-  view_setup lib_ss 0.81V 125C rc_worst
-  view_hold  lib_ff 1.05V -40C rc_best
-} {
+foreach spec $::PR_MMMC_VIEW_SPECS {
+  lassign $spec view lib rc_corner check_type
+  lassign [dict get $::PR_LIBRARY_PVT $lib] voltage temperature
   lassign [dict get $::RC_CORNER_SCALES $rc_corner] r_scale c_scale xcap_scale
-  puts "PR_MMMC_VIEW view=$view library=$lib voltage=$voltage temperature=$temperature rc_corner=$rc_corner qrc=[dict get $::QRC_TECH_FILES $rc_corner] R=$r_scale C=$c_scale XCap=$xcap_scale"
+  puts "PR_MMMC_VIEW view=$view check=$check_type library=$lib voltage=$voltage temperature=$temperature rc_corner=$rc_corner qrc=[dict get $::QRC_TECH_FILES $rc_corner] R=$r_scale C=$c_scale XCap=$xcap_scale"
 }

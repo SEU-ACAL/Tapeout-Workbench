@@ -28,6 +28,118 @@ proc ::pr_read_report {path} {
   return $text
 }
 
+proc ::pr_timing_report_name {name} {
+  set report_name [string map [list " " "_" "/" "_" "\\" "_" ":" "_" "{" "_" "}" "_"] $name]
+  regsub -all {[^A-Za-z0-9_.-]} $report_name _ report_name
+  return $report_name
+}
+
+proc ::pr_apply_upstream_path_groups {sdc_file} {
+  if {![file exists $sdc_file]} {
+    error "Cannot apply path groups from missing SDC: $sdc_file"
+  }
+
+  # Innovus treats SDC files loaded by create_constraint_mode as mode-local and
+  # ignores group_path.  Re-source the upstream SDC after init_design with all
+  # non-group commands temporarily disabled so the original group definitions
+  # remain the single source of truth and become global as required by Innovus.
+  set disabled_commands {
+    set_units
+    set_max_transition
+    set_max_fanout
+    set_ideal_network
+    create_clock
+    set_clock_uncertainty
+    set_clock_transition
+    set_input_delay
+    set_output_delay
+  }
+  set saved_commands {}
+  foreach command $disabled_commands {
+    set original_command ::$command
+    if {[llength [info commands $original_command]] == 0} {
+      continue
+    }
+    set saved_command ::pr_path_group_saved_$command
+    rename $original_command $saved_command
+    proc $original_command {args} {}
+    lappend saved_commands [list $original_command $saved_command]
+  }
+
+  set status [catch {uplevel #0 [list source $sdc_file]} result options]
+  foreach command_pair [lreverse $saved_commands] {
+    lassign $command_pair original_command saved_command
+    rename $original_command {}
+    rename $saved_command $original_command
+  }
+  if {$status != 0} {
+    return -options $options $result
+  }
+
+  set path_groups [get_path_groups -include_internal_groups *]
+  set path_group_names {}
+  foreach_in_collection path_group $path_groups {
+    lappend path_group_names [get_object_name $path_group]
+  }
+  puts "PR_PATH_GROUPS groups=$path_group_names source=$sdc_file"
+}
+
+proc ::pr_write_grouped_timing_reports {report_dir check_type} {
+  if {$check_type eq "setup"} {
+    set views [all_setup_analysis_views]
+    set analysis_flag -late
+  } elseif {$check_type eq "hold"} {
+    set views [all_hold_analysis_views]
+    set analysis_flag -early
+  } else {
+    error "Unsupported timing report type '$check_type'"
+  }
+
+  if {[llength $views] == 0} {
+    error "No active $check_type analysis views are available for reporting"
+  }
+
+  set timing_dir [file join $report_dir timing $check_type]
+  file mkdir $timing_dir
+  set index [open [file join $timing_dir index.rpt] w]
+  puts $index "TIMING REPORT INDEX"
+  puts $index "check_type=$check_type"
+  puts $index "active_views=$views"
+  puts $index ""
+
+  if {[catch {get_path_groups -include_internal_groups *} path_groups] || $path_groups eq ""} {
+    close $index
+    error "No path groups are defined; cannot produce grouped $check_type timing reports"
+  }
+
+  foreach view $views {
+    set view_dir [file join $timing_dir [::pr_timing_report_name $view]]
+    file mkdir $view_dir
+    puts $index "VIEW: $view"
+    puts $index "  summary: [file join [file tail $view_dir] summary.rpt]"
+    puts $index "  constraints: [file join [file tail $view_dir] constraints.rpt]"
+
+    report_analysis_summary $analysis_flag -view $view > [file join $view_dir summary.rpt]
+    report_constraint $analysis_flag -all_violators -view $view > [file join $view_dir constraints.rpt]
+
+    foreach_in_collection path_group $path_groups {
+      set group_name [get_object_name $path_group]
+      set group_dir [file join $view_dir [::pr_timing_report_name $group_name]]
+      file mkdir $group_dir
+      puts $index "  GROUP: $group_name"
+      puts $index "    endpoints: [file join [file tail $group_dir] endpoints.rpt]"
+      puts $index "    worst_path: [file join [file tail $group_dir] worst_path.rpt]"
+
+      report_timing $analysis_flag -view $view -path_group $group_name \
+        -max_paths 200 -nworst 1 -path_type end_slack_only > [file join $group_dir endpoints.rpt]
+      report_timing $analysis_flag -view $view -path_group $group_name \
+        -max_paths 1 -nworst 1 -path_type full_clock -net > [file join $group_dir worst_path.rpt]
+    }
+    puts $index ""
+  }
+  close $index
+}
+
 proc ::pr_gate_signoff_report {name path} {
   set text [::pr_read_report $path]
   if {[regexp -nocase {\mERROR\M} $text]} {
@@ -85,10 +197,8 @@ create_flow_step -name run_final_reports -owner design -exclude_time_metric {
   file mkdir $report_dir
 
   timeDesign -expandedViews -reportOnly -outDir [file join $report_dir timing_debug]
-  report_analysis_summary -late -merged_groups -merged_views > [file join $report_dir setup.summary.rpt]
-  report_analysis_summary -early -merged_groups -merged_views > [file join $report_dir hold.summary.rpt]
-  report_timing -max_paths 1 -nworst 1 -path_type full_clock -net > [file join $report_dir setup.worst.rpt]
-  report_timing -early -max_paths 1 -nworst 1 -path_type full_clock -net > [file join $report_dir hold.worst.rpt]
+  ::pr_write_grouped_timing_reports $report_dir setup
+  ::pr_write_grouped_timing_reports $report_dir hold
   report_constraint -all_violators > [file join $report_dir clock.drv.rpt]
   report_clock_timing -type summary > [file join $report_dir clock.summary.rpt]
   report_clock_timing -type latency > [file join $report_dir clock.latency.rpt]
@@ -152,8 +262,11 @@ create_flow_step -name write_outputs -owner design -write_db {
   puts $manifest "input_netlist=$::NETLIST"
   puts $manifest "input_pr_sdc=$::SDC"
   puts $manifest "input_upstream_sdc=$::PR_UPSTREAM_SDC"
-  puts $manifest "setup_view=view_setup library=lib_ss voltage=0.81V temperature=125C rc_corner=rc_worst"
-  puts $manifest "hold_view=view_hold library=lib_ff voltage=1.05V temperature=-40C rc_corner=rc_best"
+  foreach spec $::PR_MMMC_VIEW_SPECS {
+    lassign $spec view library_set rc_corner check_type
+    lassign [dict get $::PR_LIBRARY_PVT $library_set] voltage temperature
+    puts $manifest "analysis_view=$view check=$check_type library=$library_set voltage=$voltage temperature=$temperature rc_corner=$rc_corner"
+  }
   foreach rc_corner {rc_worst rc_best c_worst c_best rc_typical} {
     puts $manifest "qrc_$rc_corner=[dict get $::QRC_TECH_FILES $rc_corner]"
   }

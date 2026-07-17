@@ -36,6 +36,20 @@ set ::RC_CORNER_SCALES [dict create \
   c_best     {1.0 1.0 1.0} \
   rc_typical {1.0 1.0 1.0}]
 
+# Each entry is {analysis_view library_set rc_corner check_type}.  Keep the
+# nominal RC extremes and the capacitance extremes active so reports expose
+# both delay and coupling-sensitive timing behavior.  New views must use a
+# characterized library/RC pair from the qualified PDK matrix.
+set ::PR_MMMC_VIEW_SPECS [list \
+  [list view_setup          lib_ss rc_worst setup] \
+  [list view_setup_cworst   lib_ss c_worst  setup] \
+  [list view_hold           lib_ff rc_best  hold]  \
+  [list view_hold_cbest     lib_ff c_best   hold]]
+
+set ::PR_LIBRARY_PVT [dict create \
+  lib_ss {0.81V 125C} \
+  lib_ff {1.05V -40C}]
+
 set ::FLOORPLAN_DEF ""
 set ::CORE_SITE core7T
 set ::CORE_ASPECT_RATIO 1.0

@@ -273,13 +273,9 @@ create_flow_step -name report_area_innovus -owner cadence -exclude_time_metric -
 create_flow_step -name report_timing_late_innovus -owner cadence -exclude_time_metric -categories setup {
   #- Update the timer for setup and write reports
   timeDesign -expandedViews -reportOnly -outDir debug
-
-  #- Reports that describe timing health
-  report_analysis_summary -late                               > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/setup.analysis_summary.rpt
-  report_analysis_summary -late -merged_groups                > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/setup.group_summary.rpt
-  report_analysis_summary -late -merged_groups -merged_views  > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/setup.view_summary.rpt
-  report_constraint       -late -all_violators                > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/setup.all_violators.rpt
-  set_metric -name timing.drv.report_file -value                [get_flowkit_db flow_report_name]/setup.all_violators.rpt
+  set report_dir [file join [get_flowkit_db flow_report_directory] [get_flowkit_db flow_report_name]]
+  ::pr_write_grouped_timing_reports $report_dir setup
+  set_metric -name timing.drv.report_file -value [get_flowkit_db flow_report_name]/timing/setup/index.rpt
 }
 
 ##############################################################################
@@ -288,12 +284,8 @@ create_flow_step -name report_timing_late_innovus -owner cadence -exclude_time_m
 create_flow_step -name report_timing_early_innovus -owner cadence -exclude_time_metric -categories hold {
   #- Update the timer for hold and write reports
   timeDesign -expandedViews -hold -reportOnly -outDir debug
-
-  #- Reports that describe timing health
-  report_analysis_summary -early                               > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/hold.analysis_summary.rpt
-  report_analysis_summary -early -merged_groups                > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/hold.group_summary.rpt
-  report_analysis_summary -early -merged_groups -merged_views  > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/hold.view_summary.rpt
-  report_constraint       -early -all_violators                > [get_flowkit_db flow_report_directory]/[get_flowkit_db flow_report_name]/hold.all_violators.rpt
+  set report_dir [file join [get_flowkit_db flow_report_directory] [get_flowkit_db flow_report_name]]
+  ::pr_write_grouped_timing_reports $report_dir hold
 }
 
 ##############################################################################

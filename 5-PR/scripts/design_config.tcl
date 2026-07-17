@@ -5,6 +5,7 @@ create_flow_step -name init_design -owner design -write_db {
   set ::init_top_cell         $::TOP_MODULE
   init_design
   uplevel #0 source [get_flowkit_db init_flow_directory]/innovus_config.tcl
+  ::pr_apply_upstream_path_groups $::PR_UPSTREAM_SDC
 }
 
 create_flow_step -name init_floorplan -owner design {
