@@ -67,7 +67,13 @@ floorplan -> prects -> cts -> postcts -> route -> postroute
 
 新增 view 时，应同时更新 `PR_MMMC_VIEW_SPECS`，并确认 library、PVT 和 QRC corner 是 PDK 中已标定的组合。不要仅修改报告脚本而不修改 MMMC 定义。
 
-## 5. Path group 和时序报告
+## 5. I/O pin planning
+
+未提供 `FLOORPLAN_DEF` 时，流程会将输入端口固定在左边界、输出端口固定在右边界；`clock` 因而获得物理入口，CTS 可将 source-to-root 连线纳入实现。层和边界由 `IO_PIN_*` 配置项控制。
+
+CTS 前与最终报告阶段都会导出 I/O placement DEF 并检查每个顶层端口均为 `PLACED`、`FIXED` 或 `COVER`；任一未放置端口都会阻止 CTS 或交付。若项目有封装或 block pin plan，应设置 `FLOORPLAN_DEF` 并确保其中包含所有 I/O 的位置。
+
+## 6. Path group 和时序报告
 
 上游 SDC 中的 `group_path` 是 path group 的唯一来源。Innovus 将 SDC 作为 `create_constraint_mode` 输入时，`group_path` 可能只保存在 mode 局部；因此 `init_design` 后会临时屏蔽时钟和 I/O 约束命令，再次 source 上游 SDC，只重放全局 path group。这样既不会重复创建 clock，也能保证报告按真实 group 划分。
 
@@ -98,7 +104,7 @@ reports/final/clock.drv.rpt
 
 如果 `clock.skew.rpt` 显示 0，先确认 CTS 已执行、时钟网络已连接，并查看 `/tmp/icwb_pr.log` 中的 clock/CTS 警告；`IMPCCOPT-2215` 表示某个 clock 路由图未完全连通，需要单独调查，不能把 0 直接当作 signoff 结果。
 
-## 6. `timing_debug` 压缩报告
+## 7. `timing_debug` 压缩报告
 
 `reports/final/timing_debug/` 下的 `.gz` 文件是 gzip 压缩的文本报告。文件名中的 `.tarpt.gz` 是 Innovus 的报告命名方式，并不表示 tar archive，不要使用 `tar -xzf` 解压。
 
@@ -112,7 +118,7 @@ gzip -cd reports/final/timing_debug/multiplier_pipe3_default.tarpt.gz | less
 file reports/final/timing_debug/*.tarpt.gz
 ```
 
-## 7. 断点续跑
+## 8. 断点续跑
 
 可以在 Innovus 会话中从指定步骤开始，到指定步骤结束：
 
@@ -126,7 +132,7 @@ run_flow -flow block \
 
 断点续跑前确认 `runs/block-20260717/` 中已有对应的 Flowkit/Innovus 数据库。若要从头开始，请使用新的 `run_name`，避免混用旧数据库和新脚本。
 
-## 8. 运行结果检查
+## 9. 运行结果检查
 
 先查看 gate 汇总：
 
@@ -152,13 +158,13 @@ less reports/final/timing/hold/index.rpt
 less reports/final/route.drc.rpt
 less reports/final/route.open.rpt
 less reports/final/route.antenna.rpt
+less reports/final/io_pin_placement.rpt
 ```
 
-## 9. 当前限制和后续完善项
+## 10. 当前限制和后续完善项
 
 - metal density 和 cut density 已生成报告，但尚未纳入 gate 硬门禁；当前 run 中仍可能存在 density 违规。
 - setup/hold 的 WNS、TNS 尚未纳入自动 gate，需要在确认项目时序目标后增加阈值检查。
 - IR/EM 分析尚未接入本 PR flow。
-- `IMPCCOPT-2215` 的 clock traversal graph 未完全连通，需要确认 clock trunk、route 和 CTS 约束。
+- 修改 pin plan 后必须从 floorplan 重新完整运行；不能复用缺少端口位置的 CTS 数据库。
 - `scripts/run_flow.tcl` 是 Innovus 内使用的标准入口；不要用不匹配的 `flowtool` 命令替代 Innovus 执行本流程。
-

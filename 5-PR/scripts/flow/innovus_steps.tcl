@@ -66,6 +66,11 @@ create_flow_step -name add_clock_spec -owner cadence {
   if {[llength $pr_clock_sinks] == 0} {
     error "CTS precheck failed: clock tree spec has no sinks"
   }
+  set pr_cts_precheck_dir [file join $::PR_ROOT reports cts]
+  file mkdir $pr_cts_precheck_dir
+  ::pr_check_io_pin_placement \
+    [file join $pr_cts_precheck_dir io_pin_placement.def] \
+    [file join $pr_cts_precheck_dir io_pin_placement.rpt]
   puts "PR_CTS_PRECHECK clock_tree_sinks=[llength $pr_clock_sinks] ideal_clock_source=$::PR_CLOCK_PORT"
 }
 

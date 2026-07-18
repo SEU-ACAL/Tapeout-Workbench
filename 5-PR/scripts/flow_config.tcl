@@ -182,7 +182,8 @@ proc ::pr_gate_signoff_report {name path} {
 
 proc ::pr_gate_clock_drv {path} {
   set text [::pr_read_report $path]
-  if {[regexp -nocase {(^|\n)[^\n]*(max[_ ]?(fanout|transition|capacitance)|fanout|transition)[^\n]*\mVIOLATED\M} $text]} {
+  if {[regexp -nocase {\|[^\n|]*\|[^\n|]*\|[^\n|]*\|\s*-[0-9.]+\s*\|} $text] || \
+      [regexp -nocase {(^|\n)[^\n]*(max[_ ]?(fanout|transition|capacitance)|fanout|transition)[^\n]*\mVIOLATED\M} $text]} {
     error "Unresolved clock fanout/DRV violation: $path"
   }
   if {[regexp -nocase {(disconnected|unrouted)[^\n]*(clock|net)|(clock|net)[^\n]*(disconnected|unrouted)} $text]} {
@@ -190,6 +191,45 @@ proc ::pr_gate_clock_drv {path} {
   }
   set ::PR_SIGNOFF_CHECK_STATUS(clock_drv) pass
   puts "PR_SIGNOFF_CHECK name=clock_drv status=pass"
+}
+
+proc ::pr_check_io_pin_placement {def_file report_file} {
+  defOut $def_file
+  set def_text [::pr_read_report $def_file]
+  set report [open $report_file w]
+  set unplaced_ports {}
+
+  foreach_in_collection port [get_ports *] {
+    set port_name [get_object_name $port]
+    set record_start [string first "- $port_name " $def_text]
+    if {$record_start < 0} {
+      lappend unplaced_ports $port_name
+      puts $report "port=$port_name status=missing"
+      continue
+    }
+    set record_end [string first "\n;" $def_text $record_start]
+    if {$record_end < 0} {
+      set record_end [string length $def_text]
+    }
+    set record [string range $def_text $record_start $record_end]
+    if {[regexp {\+ (?:PLACED|FIXED|COVER) \(} $record]} {
+      puts $report "port=$port_name status=placed"
+    } else {
+      lappend unplaced_ports $port_name
+      puts $report "port=$port_name status=unplaced"
+    }
+  }
+  close $report
+
+  if {[llength $unplaced_ports] != 0} {
+    error "Unplaced I/O port(s): $unplaced_ports; see $report_file"
+  }
+  puts "PR_IO_PIN_PLACEMENT status=pass ports=[sizeof_collection [get_ports *]]"
+}
+
+proc ::pr_write_io_pin_placement_report {report_dir} {
+  ::pr_check_io_pin_placement [file join $report_dir io_pin_placement.def] \
+    [file join $report_dir io_pin_placement.rpt]
 }
 
 create_flow_step -name run_final_reports -owner design -exclude_time_metric {
@@ -211,10 +251,12 @@ create_flow_step -name run_final_reports -owner design -exclude_time_metric {
   verifyMetalDensity -report [file join $report_dir route.metal_density.rpt]
   verifyCutDensity -report [file join $report_dir route.cut_density.rpt]
   checkDesign -all > [file join $report_dir design.check.rpt]
+  ::pr_write_io_pin_placement_report $report_dir
 }
 
 create_flow_step -name gate_final_signoff -owner design -exclude_time_metric {
   set report_dir $::PR_FINAL_REPORT_DIR
+  ::pr_read_report [file join $report_dir io_pin_placement.rpt]
   ::pr_gate_clock_drv [file join $report_dir clock.drv.rpt]
   ::pr_gate_signoff_report drc [file join $report_dir route.drc.rpt]
   ::pr_gate_signoff_report connectivity [file join $report_dir route.open.rpt]

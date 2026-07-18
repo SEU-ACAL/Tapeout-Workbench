@@ -1,0 +1,4 @@
+interface:
+  display_name: "TSMC SRAM Generation"
+  short_description: "Generate verified TSMC SRAM macros from mems.conf"
+  default_prompt: "Generate TSMC SRAM macros from this mems.conf using the PDK scripts and verify the deliverables."
