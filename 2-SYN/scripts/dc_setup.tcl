@@ -5,12 +5,19 @@ set sh_enable_page_mode false
 set compile_seqmap_identify_shift_registers false
 set compile_seqmap_identify_shift_registers_with_synchronous_logic false
 set timing_enable_multiple_clocks_per_reg true
-set SOURCE_CODE_HOME /data1/GB/chipyard/soc-generator/sims/vcs/generated-src/chipyard.harness.TestHarness.TapeoutConfig
+if {![info exists SOURCE_CODE_HOME]} {
+    set SOURCE_CODE_HOME /data1/GB/chipyard/soc-generator/sims/vcs/generated-src/chipyard.harness.TestHarness.TapeoutConfig
+}
 
 
 set SRAM_ROOT /data2/TSMC28/Memory/SRAM
 set SRAM_CORNER ssg0p81v125c
-set SRAM_WRAPPER_FILE $SOURCE_CODE_HOME/gen-collateral/chipyard.harness.TestHarness.TapeoutConfig.top.mems.v
+if {![info exists SRAM_WRAPPER_FILE]} {
+    set default_sram_wrapper $SOURCE_CODE_HOME/gen-collateral/chipyard.harness.TestHarness.TapeoutConfig.top.mems.v
+    if {[file exists $default_sram_wrapper]} {
+        set SRAM_WRAPPER_FILE $default_sram_wrapper
+    }
+}
 
 set search_path [list $SOURCE_CODE_HOME]
 # 使用7t ss corner

@@ -1,8 +1,77 @@
 #! /bin/sh
+
+usage() {
+    cat <<'EOF'
+Usage: ./run_core [options]
+
+Options:
+  --source-code-home <dir>  Set SOURCE_CODE_HOME for the synthesis Tcl flow.
+  --filelist <file>         Set HDL_FILELIST for the synthesis Tcl flow.
+  --top <module>            Set TOP_MODULE for the synthesis Tcl flow.
+  --sram-wrapper <file>     Optionally set SRAM_WRAPPER_FILE.
+  -h, --help                Show this help message.
+EOF
+}
+
+tcl_escape() {
+    printf '%s' "$1" | sed 's/[\\{}]/\\&/g'
+}
+
+require_value() {
+    if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+        echo "Option $1 requires a value" >&2
+        usage >&2
+        exit 1
+    fi
+}
+
+dc_command=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source-code-home)
+            require_value "$@"
+            SOURCE_CODE_HOME=$2
+            shift 2
+            ;;
+        --filelist)
+            require_value "$@"
+            HDL_FILELIST=$2
+            shift 2
+            ;;
+        --top)
+            require_value "$@"
+            TOP_MODULE=$2
+            shift 2
+            ;;
+        --sram-wrapper)
+            require_value "$@"
+            SRAM_WRAPPER_FILE=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE; do
+    eval "value=\${$variable-}"
+    if [ -n "$value" ]; then
+        escaped_value=$(tcl_escape "$value")
+        dc_command="$dc_command; set $variable {$escaped_value}"
+    fi
+done
+
 rm -f ./alib-52/*
 rm -f ./elab/*
 log_date=$(date +%m%d)_$(date +%H%M)
 mkdir outputs/$log_date
 mkdir rpt/$log_date
 #/usr/eda/synopsys/syn_J201409SP3/bin/dc_shell-t -f ./scripts/core.tcl -x "set data ${log_date}" | tee ./log/core_${log_date}.log
-dc_shell -f ./scripts/core.tcl -x "set data ${log_date}" | tee ./log/core_${log_date}.log
+dc_shell -f ./scripts/core.tcl -x "set data {$log_date}$dc_command" | tee ./log/core_${log_date}.log

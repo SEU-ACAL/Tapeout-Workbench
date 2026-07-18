@@ -1,4 +1,6 @@
-set TOP_MODULE  multiplier_pipe3
+if {![info exists TOP_MODULE]} {
+    set TOP_MODULE ChipTop
+}
 
 set_host_options -max_cores 16
 set compile_enable_register_merging    true
@@ -13,14 +15,26 @@ set change_names_dont_change_bus_members      true
 set compile_disable_hierarchical_inverter_opt true
 set auto_insert_level_shifters_on_clocks      all
 set auto_insert_level_shifters true
-# set hdlin_verilog_defines [list "SYNTHESIS"]
-# set file_handle [open "/home/gb123/EDA_DOCKER/ic_workbench/0-RTL/CPU/1/filelist.f" r]
+set hdlin_verilog_defines [list "SYNTHESIS"]
+if {![info exists HDL_FILELIST]} {
+    set HDL_FILELIST $SOURCE_CODE_HOME/chipyard.harness.TestHarness.TapeoutConfig.top.f
+}
+if {![file exists $HDL_FILELIST]} {
+    error "Missing HDL filelist: $HDL_FILELIST"
+}
+set file_handle [open $HDL_FILELIST r]
 
-# set MY_HDL_FILES [split [read $file_handle] "\n"]
+set MY_HDL_FILES [split [read $file_handle] "\n"]
 
-# close $file_handle
+close $file_handle
 
-set ALL_HDL_FILES  /data1/GB/ic_workbench/0-RTL/multi.v
+set ALL_HDL_FILES $MY_HDL_FILES
+if {[info exists SRAM_WRAPPER_FILE] && $SRAM_WRAPPER_FILE ne ""} {
+    if {![file exists $SRAM_WRAPPER_FILE]} {
+        error "Missing SRAM wrapper: $SRAM_WRAPPER_FILE"
+    }
+    lappend ALL_HDL_FILES $SRAM_WRAPPER_FILE
+}
 
 set hdlin_verilog_defines [list "SYNTHESIS"]
 
@@ -71,7 +85,7 @@ source -e -v ./scripts/operation_conditions.tcl
 
 compile_ultra -area_high_effort_script -no_autoungroup  -no_boundary_optimization  
 ##compile_ultra -timing_high_effort_script -no_autoungroup  -no_boundary_optimization -incremental
-
+optimize_netlist -area
 set_fix_multiple_port_nets -all -buffer_constants
 set_fix_multiple_port_nets -all -buffer_constants [all_designs]
 
