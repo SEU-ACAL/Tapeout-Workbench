@@ -7,7 +7,8 @@ set     MAX_CAP                  1
 set     MAX_TRAN                 2
 ##### 时钟周期参数定义 ###########################################################
 
-set PAD_cpu_clock_period            40
+set PAD_cpu_clock_period  1          
+
 # set PAD_cpu_serial_clock_period     20
 # set PAD_cpu_jtag_clock_period       100
 # set clk_pll_cpu_period              5
