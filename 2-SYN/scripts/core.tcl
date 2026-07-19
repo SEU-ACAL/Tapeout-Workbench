@@ -117,17 +117,32 @@ write_link_library -out                               ./outputs/$data/link_libra
 
 
 #############################################################################333333333
+proc write_compact_timing_report {output args} {
+    redirect -variable timing_report [list report_timing {*}$args]
+
+    # Exclude per-path hierarchy wire-load summaries while retaining timing tables.
+    regsub -all {(?s)\n  Des/Clust/Port.*?\n\n  (Attributes:|Point)} \
+        $timing_report "\n\n  \\1" timing_report
+
+    set report_file [open $output w]
+    puts -nonewline $report_file $timing_report
+    close $report_file
+}
+
 report_constraint -all_vio > ./rpt/$data/constrant.rpt
 report_area   -hier        > ./rpt/$data/area.rpt
 report_constraint  -all_violators                         > ./rpt/$data/${TOP_MODULE}_constraint_all_violators.rpt
 check_timing                                              > ./rpt/$data/${TOP_MODULE}_check_timing_final.rpt
 report_timing_requirements                                > ./rpt/$data/${TOP_MODULE}_report_timing_requirements.rpt
-report_timing -transition_time -nets -attributes -nosplit > ./rpt/$data/${TOP_MODULE}_mapped_timing.rpt
+write_compact_timing_report \
+    ./rpt/$data/${TOP_MODULE}_mapped_timing.rpt \
+    -transition_time -nets -attributes -nosplit
 report_area -physical -nosplit -hierarchy                 > ./rpt/$data/${TOP_MODULE}_mapped_area.rpt
 report_power -hierarchy                                   > ./rpt/$data/${TOP_MODULE}_power.rpt
 report_cell                                               > ./rpt/$data/${TOP_MODULE}_cell.rpt
 foreach path_group {I2R R2R R2O I2O} {
-    report_timing \
+    write_compact_timing_report \
+        ./rpt/$data/${TOP_MODULE}_${path_group}_setup.rpt \
         -group $path_group \
         -delay max \
         -path_type full \
@@ -135,19 +150,13 @@ foreach path_group {I2R R2R R2O I2O} {
         -transition_time \
         -nets \
         -attributes \
-        -nosplit \
-        > ./rpt/$data/${TOP_MODULE}_${path_group}_setup.rpt
+        -nosplit
 }
 
 report_qor -significant_digits 4 \
       > ./rpt/$data/${TOP_MODULE}_qor.rpt
 foreach path_group {I2R R2R R2O I2O} {
-    report_logic_levels \
-        -group $path_group \
-        -max_paths 10000 \
-        -max_paths_to_report 500 \
-        -num_bins 20 \
-        -nosplit \
+    report_logic_levels -group $path_group -max_paths 10000 -max_paths_to_report 500 -num_bins 20 -nosplit \
         > ./rpt/$data/${TOP_MODULE}_${path_group}_logic_levels.rpt
 }
 
