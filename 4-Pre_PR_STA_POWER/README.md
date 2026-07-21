@@ -14,14 +14,11 @@ Set technology paths outside the Makefile:
 export STD_CELL_DB=/path/to/standard-cell-power.db
 export SRAM_ROOT=/path/to/sram/library/root
 export SRAM_CORNER=ssg0p81v125c
-export FSDB2SAIF=/path/to/verdi-w2024/bin/fsdb2saif
 ```
 
-`FSDB2SAIF` must be from a Verdi release that supports the VCS-generated FSDB
-version. The current zero-delay waveform is FSDB 6.1, which requires W-2024.
-
-`PT_SHELL` defaults to `pt_shell`. Set it explicitly when the PrimeTime binary
-is not already in `PATH`:
+`PT_SHELL` defaults to `pt_shell`. Use PrimePower W-2024 or later: the
+zero-delay waveform is FSDB 6.1, and W-2024 reads it natively. Set the shell
+explicitly when it is not already in `PATH`:
 
 ```sh
 export PT_SHELL=/path/to/pt_shell
@@ -44,9 +41,9 @@ Run averaged power analysis:
 make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0720_1845
 ```
 
-The target converts `run-zero.fsdb` to SAIF only when the waveform is newer
-than the existing SAIF. It analyzes activity after `1000 ns`, excluding reset
-startup. Override the activity window or waveform path when needed:
+The target reads `run-zero.fsdb` directly. It analyzes activity after `1000 ns`,
+excluding reset startup. Override the activity window or waveform path when
+needed:
 
 ```sh
 make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0720_1845 \
@@ -59,7 +56,6 @@ Reports are written under `outputs/<netlist-run>/zero-fsdb/`:
 - `power_hierarchy.rpt`: hierarchy breakdown
 - `power_verbose.rpt`: detailed power report
 - `check_power.rpt`: library table and model coverage checks
-- `activity_inconsistent.rpt`: conflicting SAIF annotations, if present
 
 This is a pre-layout averaged-power estimate. It does not use SDF or extracted
 parasitics, so it is suitable for workload comparison but not signoff.
