@@ -18,6 +18,12 @@ work/
 *.vcd
 *.vpd
 *.key
+3-Pre_PR_NETSIM/gen/
+3-Pre_PR_NETSIM/inputs/
+3-Pre_PR_NETSIM/simv-gls-*
+3-Pre_PR_NETSIM/sdf_annotation.log
+3-Pre_PR_NETSIM/vc_hdrs.h
+pt_shell_command.log
 
 # Design Compiler synthesis products
 2-SYN/alib-*/
