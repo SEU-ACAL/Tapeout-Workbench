@@ -4,7 +4,7 @@ if {![info exists TOP_MODULE]} {
 
 set_host_options -max_cores 16
 set compile_enable_register_merging    true
-set compile_seqmap_propagate_constants true
+set compile_seqmap_propagate_constants false
 set verilogout_no_tri   "true"
 set verilogout_equation "false"
 set mv_default_level_shifter_voltage_range_infinity true
@@ -15,6 +15,8 @@ set change_names_dont_change_bus_members      true
 set compile_disable_hierarchical_inverter_opt true
 set auto_insert_level_shifters_on_clocks      all
 set auto_insert_level_shifters true
+# Apply before analyze so clocked constant assignments retain their reset role.
+set hdlin_ff_always_sync_set_reset true
 set hdlin_verilog_defines [list "SYNTHESIS"]
 if {![info exists HDL_FILELIST]} {
     set HDL_FILELIST $SOURCE_CODE_HOME/chipyard.harness.TestHarness.TapeoutConfig.top.f
@@ -72,6 +74,10 @@ source -e -v ./scripts/set_dont_touch_cell.tcl
 source -e -v ./scripts/set_false_path.tcl
 source -e -v ./scripts/set_dont_use.tcl
 
+# Keep inferred synchronous reset logic adjacent to each register.  This
+# avoids two-state Boolean rewrites that can propagate an X through reset in
+# gate-level simulation, while allowing the logic to map to library cells.
+set_app_var compile_seqmap_honor_sync_set_reset true
 
 check_timing
 ###set_max_area 0
@@ -85,7 +91,6 @@ source -e -v ./scripts/operation_conditions.tcl
 
 compile_ultra -area_high_effort_script -no_autoungroup  -no_boundary_optimization  
 ##compile_ultra -timing_high_effort_script -no_autoungroup  -no_boundary_optimization -incremental
-optimize_netlist -area
 set_fix_multiple_port_nets -all -buffer_constants
 set_fix_multiple_port_nets -all -buffer_constants [all_designs]
 
