@@ -25,6 +25,7 @@ GLS_FILELIST := $(GEN_DIR)/gls.f
 TEST_DRIVER := $(SOC_GENERATOR_DIR)/generator/rocket-chip/src/main/resources/vsrc/TestDriver.v
 SDF_ANNOTATE := $(CURDIR)/tb/sdf_annotate.sv
 PREPARE_FILELIST := $(CURDIR)/scripts/prepare_gls_filelist.sh
+VCS_MAKE_WRAPPER := $(CURDIR)/scripts/vcs_make_wrapper.sh
 
 VCS ?= vcs -full64
 RISCV ?=
@@ -33,7 +34,7 @@ DRAMSIM_INI_DIR ?= $(SOC_GENERATOR_DIR)/generator/testchipip/src/main/resources/
 
 ifeq ($(WAVEFORM),1)
 WAVEFORM_SUFFIX := -fsdb
-WAVEFORM_VCS_FLAGS := +define+DEBUG +define+FSDB -debug_access+all -kdb -lca
+WAVEFORM_VCS_FLAGS := +define+DEBUG -debug_access+all -kdb -lca
 else ifeq ($(WAVEFORM),0)
 WAVEFORM_SUFFIX :=
 WAVEFORM_VCS_FLAGS :=
@@ -45,11 +46,18 @@ ZERO_SIM := $(GEN_DIR)/simv-gls-zero$(WAVEFORM_SUFFIX)
 SDF_SIM := $(GEN_DIR)/simv-gls-sdf$(WAVEFORM_SUFFIX)
 ZERO_MDIR := simv-gls-zero$(WAVEFORM_SUFFIX).daidir
 SDF_MDIR := simv-gls-sdf$(WAVEFORM_SUFFIX).daidir
+GLS_PRODUCTS := \
+	$(GEN_DIR)/simv-gls-zero \
+	$(GEN_DIR)/simv-gls-zero-fsdb \
+	$(GEN_DIR)/simv-gls-sdf \
+	$(GEN_DIR)/simv-gls-sdf-fsdb
 
 VCS_FLAGS := -notice -line \
 	+lint=all,noVCDE,noONGS,noUI \
 	-error=PCWM-L -error=noZMMCM \
 	-timescale=1ns/10ps -quiet -q +rad +vcs+lic+wait +vc+list \
+	-debug_pp \
+	-Mmakep=$(VCS_MAKE_WRAPPER) \
 	-f $(GLS_FILELIST) \
 	-sverilog +systemverilogext+.sv+.svi+.svh+.svt -assert svaext +libext+.sv \
 	+v2k +verilog2001ext+.v95+.vt+.vp +libext+.v \
@@ -59,7 +67,7 @@ VCS_FLAGS := -notice -line \
 	+define+STOP_COND=!$(TB).reset \
 	+define+RANDOMIZE_MEM_INIT +define+RANDOMIZE_REG_INIT \
 	+define+RANDOMIZE_GARBAGE_ASSIGN +define+RANDOMIZE_INVALID_ASSIGN \
-	+define+VCS +define+GATE_LEVEL \
+	+define+VCS +define+FSDB +define+GATE_LEVEL \
 	-CFLAGS "-O3 -std=c++17 -I$(RISCV)/include -I$(DRAMSIM_DIR) -I$(BUILD_DIR)/gen-collateral" \
 	-LDFLAGS "-L$(RISCV)/lib -Wl,-rpath,$(RISCV)/lib -L$(SOC_GENERATOR_DIR)/sims/vcs -L$(DRAMSIM_DIR) -no-pie" \
 	-lriscv -lfesvr -ldramsim
@@ -83,7 +91,7 @@ WAVEFORM_RUN_ZERO := +fsdbfile=$(GEN_DIR)/run-zero.fsdb
 WAVEFORM_RUN_SDF := +fsdbfile=$(GEN_DIR)/run-sdf.fsdb
 endif
 
-.PHONY: help check-config prepare gls_zero gls_sdf run_zero run_sdf
+.PHONY: help check-config prepare gls_zero gls_sdf run_zero run_sdf clean-gls
 
 help:
 	@printf '%s\n' \
@@ -93,7 +101,8 @@ help:
 	  'make gls_sdf SDF=<path>             Build gate-level simulation with SDF.' \
 	  'make run_zero BINARY=<elf>          Run no-SDF gate-level simulation.' \
 	  'make run_sdf SDF=<path> BINARY=<elf> Run SDF gate-level simulation.' \
-	  'Add WAVEFORM=1 to build and run commands to write an FSDB file.'
+	  'Add WAVEFORM=1 to build and run commands to write an FSDB file.' \
+	  'make clean-gls                       Remove GLS simulators and VCS Mdirs, preserving FSDB files.'
 
 check-config:
 	@test -n '$(TAPE_ENV)' || { echo 'TAPE_ENV is unset; provide the tape-env repository root path'; exit 2; }
@@ -118,10 +127,14 @@ $(GLS_FILELIST): $(PREPARE_FILELIST) $(NETLIST) $(TEST_DRIVER) $(SDF_ANNOTATE)
 
 $(ZERO_SIM): check-config $(GLS_FILELIST) Makefile
 	@test -n '$(RISCV)' || { echo 'RISCV is unset; enter the Chipyard Nix development shell first'; exit 2; }
+	# Match Chipyard: never reuse a VCS Mdir across compile invocations.
+	@rm -rf $(GEN_DIR)/$(ZERO_MDIR)
 	$(VCS) $(VCS_FLAGS) $(ZERO_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(ZERO_MDIR) -l $@.compile.log
 
 $(SDF_SIM): check-config $(GLS_FILELIST) $(SDF) Makefile
 	@test -n '$(RISCV)' || { echo 'RISCV is unset; enter the Chipyard Nix development shell first'; exit 2; }
+	# Match Chipyard: never reuse a VCS Mdir across compile invocations.
+	@rm -rf $(GEN_DIR)/$(SDF_MDIR)
 	$(VCS) $(VCS_FLAGS) $(SDF_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(SDF_MDIR) -l $@.compile.log
 
 gls_zero: $(ZERO_SIM)
@@ -139,3 +152,6 @@ run_zero: $(ZERO_SIM)
 run_sdf: $(SDF_SIM)
 	@test -n '$(BINARY)' || { echo 'Set BINARY=<ELF>'; exit 2; }
 	$(SDF_SIM) +permissive $(RUN_FLAGS) $(SEED_FLAG) $(LOADMEM_FLAG) $(WAVEFORM_RUN_SDF) +permissive-off $(BINARY) -l $(GEN_DIR)/run-sdf.log
+
+clean-gls:
+	@rm -rf $(GLS_PRODUCTS) $(addsuffix .daidir,$(GLS_PRODUCTS))
