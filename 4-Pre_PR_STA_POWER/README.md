@@ -15,10 +15,8 @@ make -C 4-Pre_PR_STA_POWER power TECH=tsmc28 NETLIST_RUN=0720_1845
 make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run>
 ```
 
-The SMIC180 configuration uses the available standard-cell `SS 1.08V/125C`
-view and S018SP SRAM `SS 1.62V/125C` view. This is a worst-case timing/power
-estimate; the CDKs do not provide a voltage-consistent SS pair, so it is not a
-signoff power corner.
+The SMIC180 configuration uses voltage-consistent standard-cell and S018SP
+SRAM `SS 1.62V/125C` views.
 
 Technology configuration files set `STD_CELL_DB`, `SRAM_ROOT`, `SRAM_CORNER`,
 and the SRAM DB layout. All remain overridable from the command line for a
