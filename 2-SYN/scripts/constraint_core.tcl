@@ -7,7 +7,13 @@ set     MAX_CAP                  1
 set     MAX_TRAN                 2
 ##### 时钟周期参数定义 ###########################################################
 
-set PAD_cpu_clock_period  1          
+if {![info exists CLOCK_PERIOD]} {
+    set CLOCK_PERIOD 1.0
+}
+if {![string is double -strict $CLOCK_PERIOD] || ![expr {$CLOCK_PERIOD > 0.0}]} {
+    error "CLOCK_PERIOD must be a positive number in nanoseconds, got '$CLOCK_PERIOD'"
+}
+set PAD_cpu_clock_period $CLOCK_PERIOD
 
 # set PAD_cpu_serial_clock_period     20
 # set PAD_cpu_jtag_clock_period       100
