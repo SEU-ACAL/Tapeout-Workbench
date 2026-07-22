@@ -35,6 +35,12 @@ read_fsdb -zero_delay -strip_path $activity_strip_path \
 update_power
 
 redirect "$power_out_dir/check_power.rpt" { check_power }
+redirect "$power_out_dir/switching_activity.rpt" {
+    report_switching_activity -hierarchy -average_activity -sort_by toggle
+}
+redirect "$power_out_dir/switching_coverage.rpt" {
+    report_switching_activity -hierarchy -coverage -sort_by hier
+}
 redirect "$power_out_dir/power_total.rpt" { report_power }
 redirect "$power_out_dir/power_hierarchy.rpt" { report_power -hierarchy -levels 3 }
 redirect "$power_out_dir/power_verbose.rpt" { report_power -verbose }
