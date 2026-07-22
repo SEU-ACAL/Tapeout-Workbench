@@ -3,7 +3,8 @@ BLOCK: multiplier_pipe3
 LEF_FILE: /data2/TSMC28/TF/N28_PRTF_Cad_v1d5a/PR_tech/Cadence/LefHeader/HVH/tsmcn28_10lm5X2Y2ZUTRDL.tlef
 LEF_FILE: /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/lef/tcbn28hpcplusbwp7t40p140lvt.lef
 TOP_DEF_FILE: /data1/GB/ic_workbench/BACKEND/PR/reports/final/io_pin_placement.def
-MAPPING_FILE: tech/starrcxt_mapping
+* Cadence LEF/DEF layer-name adapter derived from the PDK mapping above.
+MAPPING_FILE: tech/tsmc28_5x2y2z_innovus.mapping
 TCAD_GRD_FILE: /data2/TSMC28/TF/RC_Star-RCXT_cln28hpc+_1p10m+ut-alrdl_5x2y2z_rcworst/cln28hpc+_1p10m+ut-alrdl_5x2y2z_rcworst.nxtgrd
 OPERATING_TEMPERATURE: 125
 
