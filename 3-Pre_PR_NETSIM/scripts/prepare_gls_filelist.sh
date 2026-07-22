@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(NETLIST BUILD_DIR TOP TEST_DRIVER SDF_ANNOTATE STD_CELL_MODEL SRAM_ROOT SRAM_CORNER HARNESS_FILELIST SRAM_FILELIST GLS_FILELIST)
+required=(NETLIST BUILD_DIR TOP TEST_DRIVER SDF_ANNOTATE STD_CELL_MODEL SRAM_ROOT SRAM_CORNER SRAM_MODEL_TEMPLATE HARNESS_FILELIST SRAM_FILELIST GLS_FILELIST)
 for variable_name in "${required[@]}"; do
   if [[ -z "${!variable_name:-}" ]]; then
     echo "Missing required environment variable: ${variable_name}" >&2
     exit 2
   fi
 done
+
+if [[ "${SRAM_MODEL_TEMPLATE}" != *%s* ]]; then
+  echo "SRAM_MODEL_TEMPLATE must contain %s for the SRAM macro name" >&2
+  exit 2
+fi
 
 model_filelist="${BUILD_DIR}/${BUILD_DIR##*/}.model.f"
 if [[ ! -f "${model_filelist}" ]]; then
@@ -54,7 +59,13 @@ fi
 
 : > "${SRAM_FILELIST}"
 while IFS= read -r macro_name; do
-  macro_model="${SRAM_ROOT}/${macro_name}/VERILOG/${macro_name}_${SRAM_CORNER}.v"
+  macro_model_relative="${SRAM_MODEL_TEMPLATE/\%s/${macro_name}}"
+  macro_model_relative="${macro_model_relative/\%s/${SRAM_CORNER}}"
+  if [[ "${macro_model_relative}" == *%s* ]]; then
+    echo "SRAM_MODEL_TEMPLATE supports only macro-name and corner substitutions: ${SRAM_MODEL_TEMPLATE}" >&2
+    exit 2
+  fi
+  macro_model="${SRAM_ROOT}/${macro_name}/${macro_model_relative}"
   [[ -f "${macro_model}" ]] || { echo "Missing SRAM Verilog model: ${macro_model}" >&2; exit 2; }
   printf '%s\n' "${macro_model}" >> "${SRAM_FILELIST}"
 done < <(rg -o 'chipyard_sram_[[:alnum:]_]+' "${NETLIST}" | sort -u)

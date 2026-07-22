@@ -1,5 +1,12 @@
 SHELL := /bin/bash
 
+TECH ?= tsmc28
+TECH_CONFIG := scripts/tech/$(TECH).mk
+ifeq ($(wildcard $(TECH_CONFIG)),)
+$(error Unknown TECH '$(TECH)'; expected a configuration under scripts/tech)
+endif
+include $(TECH_CONFIG)
+
 TAPE_ENV ?=
 SOC_GENERATOR_DIR := $(TAPE_ENV)/soc-generator
 CONFIG ?= chipyard.harness.TestHarness.TapeoutConfig
@@ -14,9 +21,10 @@ RESET_DELAY ?= 777.7
 TIMEOUT_CYCLES ?= 10000000
 WAVEFORM ?= 0
 
-STD_CELL_MODEL ?=
-SRAM_ROOT ?=
-SRAM_CORNER ?= ssg0p81v125c
+STD_CELL_MODEL ?= $(TECH_STD_CELL_MODEL)
+SRAM_ROOT ?= $(TECH_SRAM_ROOT)
+SRAM_CORNER ?= $(TECH_SRAM_CORNER)
+SRAM_MODEL_TEMPLATE ?= $(TECH_SRAM_MODEL_TEMPLATE)
 
 GEN_DIR := $(CURDIR)/gen/$(CONFIG)/$(NETLIST_RUN)
 HARNESS_FILELIST := $(GEN_DIR)/harness.f
@@ -96,11 +104,11 @@ endif
 help:
 	@printf '%s\n' \
 	  'Run from the Chipyard Nix development shell so RISCV and VCS are exported.' \
-	  'Set TAPE_ENV, STD_CELL_MODEL, and SRAM_ROOT in the environment.' \
-	  'make gls_zero [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
-	  'make gls_sdf SDF=<path>             Build gate-level simulation with SDF.' \
+	  'make gls_zero [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
+	  'make gls_sdf [TECH=tsmc28|smic180] SDF=<path>             Build gate-level simulation with SDF.' \
 	  'make run_zero BINARY=<elf>          Run no-SDF gate-level simulation.' \
 	  'make run_sdf SDF=<path> BINARY=<elf> Run SDF gate-level simulation.' \
+	  'TECH defaults to tsmc28; STD_CELL_MODEL, SRAM_ROOT, SRAM_CORNER, and SRAM_MODEL_TEMPLATE remain overridable.' \
 	  'Add WAVEFORM=1 to build and run commands to write an FSDB file.' \
 	  'make clean-gls                       Remove GLS simulators and VCS Mdirs, preserving FSDB files.'
 
@@ -108,6 +116,7 @@ check-config:
 	@test -n '$(TAPE_ENV)' || { echo 'TAPE_ENV is unset; provide the tape-env repository root path'; exit 2; }
 	@test -n '$(STD_CELL_MODEL)' || { echo 'STD_CELL_MODEL is unset; provide the standard-cell Verilog model path'; exit 2; }
 	@test -n '$(SRAM_ROOT)' || { echo 'SRAM_ROOT is unset; provide the SRAM model root path'; exit 2; }
+	@test -n '$(SRAM_MODEL_TEMPLATE)' || { echo 'SRAM_MODEL_TEMPLATE is unset; provide the per-macro Verilog path template'; exit 2; }
 
 prepare: check-config $(GLS_FILELIST)
 
@@ -120,6 +129,7 @@ $(GLS_FILELIST): $(PREPARE_FILELIST) $(NETLIST) $(TEST_DRIVER) $(SDF_ANNOTATE)
 	 STD_CELL_MODEL='$(abspath $(STD_CELL_MODEL))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
+	 SRAM_MODEL_TEMPLATE='$(SRAM_MODEL_TEMPLATE)' \
 	 HARNESS_FILELIST='$(abspath $(HARNESS_FILELIST))' \
 	 SRAM_FILELIST='$(abspath $(SRAM_FILELIST))' \
 	 GLS_FILELIST='$(abspath $(GLS_FILELIST))' \
