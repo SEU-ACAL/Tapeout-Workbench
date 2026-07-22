@@ -307,7 +307,8 @@ create_flow_step -name write_outputs -owner design -write_db {
   foreach spec $::PR_MMMC_VIEW_SPECS {
     lassign $spec view library_set rc_corner check_type
     lassign [dict get $::PR_LIBRARY_PVT $library_set] voltage temperature
-    puts $manifest "analysis_view=$view check=$check_type library=$library_set voltage=$voltage temperature=$temperature rc_corner=$rc_corner"
+    set rc_temperature [dict get $::RC_CORNER_TEMPERATURES $rc_corner]
+    puts $manifest "analysis_view=$view check=$check_type library=$library_set voltage=$voltage temperature=$temperature rc_corner=$rc_corner rc_temperature=${rc_temperature}C"
   }
   foreach rc_corner {rc_worst rc_best c_worst c_best rc_typical} {
     puts $manifest "qrc_$rc_corner=[dict get $::QRC_TECH_FILES $rc_corner]"

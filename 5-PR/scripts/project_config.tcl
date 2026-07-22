@@ -36,6 +36,15 @@ set ::RC_CORNER_SCALES [dict create \
   c_best     {1.0 1.0 1.0} \
   rc_typical {1.0 1.0 1.0}]
 
+# Temperature in degrees Celsius passed to QRC for each extraction corner.
+# Keep active RC corners aligned with the Liberty PVT of their analysis view.
+set ::RC_CORNER_TEMPERATURES [dict create \
+  rc_worst   125 \
+  rc_best    -40 \
+  c_worst    125 \
+  c_best     -40 \
+  rc_typical 25]
+
 # Each entry is {analysis_view library_set rc_corner check_type}.  Keep the
 # nominal RC extremes and the capacitance extremes active so reports expose
 # both delay and coupling-sensitive timing behavior.  New views must use a
