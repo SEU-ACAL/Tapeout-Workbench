@@ -9,6 +9,7 @@ Options:
   --filelist <file>         Set HDL_FILELIST for the synthesis Tcl flow.
   --top <module>            Set TOP_MODULE for the synthesis Tcl flow.
   --sram-wrapper <file>     Optionally set SRAM_WRAPPER_FILE.
+  --tech <name>             Select technology configuration (default: tsmc28).
   -h, --help                Show this help message.
 EOF
 }
@@ -48,6 +49,11 @@ while [ "$#" -gt 0 ]; do
             SRAM_WRAPPER_FILE=$2
             shift 2
             ;;
+        --tech)
+            require_value "$@"
+            TECH_CONFIG=$2
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -60,7 +66,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE; do
+for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG; do
     eval "value=\${$variable-}"
     if [ -n "$value" ]; then
         escaped_value=$(tcl_escape "$value")

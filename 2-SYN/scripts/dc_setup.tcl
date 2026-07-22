@@ -10,12 +10,27 @@ if {![info exists SOURCE_CODE_HOME]} {
 }
 
 
-set SRAM_ROOT /data2/TSMC28/Memory/SRAM
-set SRAM_CORNER ssg0p81v125c
+if {![info exists TECH_CONFIG]} {
+    set TECH_CONFIG tsmc28
+}
+set tech_setup [file join [file dirname [info script]] tech ${TECH_CONFIG}.tcl]
+if {![file exists $tech_setup]} {
+    error "Missing technology configuration: $tech_setup"
+}
+source $tech_setup
+puts "Synthesis technology: $TECH_CONFIG, standard-cell corner: $TECH_CORNER, SRAM corner: $SRAM_CORNER"
 if {![info exists SRAM_WRAPPER_FILE]} {
     set default_sram_wrapper $SOURCE_CODE_HOME/gen-collateral/chipyard.harness.TestHarness.TapeoutConfig.top.mems.v
     if {[file exists $default_sram_wrapper]} {
         set SRAM_WRAPPER_FILE $default_sram_wrapper
+    }
+}
+if {[info exists SRAM_WRAPPER_FILE] && $SRAM_WRAPPER_FILE ne ""} {
+    set wrapper_handle [open $SRAM_WRAPPER_FILE r]
+    set wrapper_contents [read $wrapper_handle]
+    close $wrapper_handle
+    if {![regexp "\\.${SRAM_WRITE_ENABLE_PORT}\\(" $wrapper_contents]} {
+        error "SRAM wrapper $SRAM_WRAPPER_FILE does not match technology $TECH_CONFIG; expected .$SRAM_WRITE_ENABLE_PORT(...) ports"
     }
 }
 
@@ -38,6 +53,10 @@ set sram_link_library [list \
     $SRAM_ROOT/chipyard_sram_64x22/NLDM/chipyard_sram_64x22_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_64x21/NLDM/chipyard_sram_64x21_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x32/NLDM/chipyard_sram_512x32_$SRAM_CORNER.db]
+
+# Apply the selected technology after the legacy defaults above so the default
+# TSMC28 flow remains unchanged while alternative technologies can override it.
+source $tech_setup
 
 foreach sram_db $sram_link_library {
     if {![file exists $sram_db]} {
