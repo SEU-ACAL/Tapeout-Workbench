@@ -1,0 +1,6 @@
+starrc/logs/
+starrc/outputs/
+starrc/work/
+starrc/*.star_sum*
+starrc/.tech_file.*
+starrc/.nodeIdDynamicRanges

@@ -239,7 +239,9 @@ create_flow_step -name run_final_reports -owner design -exclude_time_metric {
   timeDesign -expandedViews -reportOnly -outDir [file join $report_dir timing_debug]
   ::pr_write_grouped_timing_reports $report_dir setup
   ::pr_write_grouped_timing_reports $report_dir hold
-  report_constraint -all_violators > [file join $report_dir clock.drv.rpt]
+  report_constraint -clock -all_violators \
+    -drv_violation_type {max_transition max_capacitance max_fanout} \
+    > [file join $report_dir clock.drv.rpt]
   report_clock_timing -type summary > [file join $report_dir clock.summary.rpt]
   report_clock_timing -type latency > [file join $report_dir clock.latency.rpt]
   report_clock_timing -type skew > [file join $report_dir clock.skew.rpt]

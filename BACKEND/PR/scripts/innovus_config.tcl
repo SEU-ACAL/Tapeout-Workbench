@@ -58,7 +58,7 @@ setOptMode -addInstancePrefix                           "[get_flowkit_db flow_re
 #-------------------------------------------------------------------------------
 set_ccopt_mode -cts_target_skew    $::CTS_TARGET_SKEW
 set_ccopt_mode -cts_target_slew    $::CTS_TARGET_SLEW
-set_ccopt_mode -cts_buffer_cells   {CKBD1BWP7T40P140LVT CKBD2BWP7T40P140LVT CKBD4BWP7T40P140LVT CKBD8BWP7T40P140LVT}
+set_ccopt_mode -cts_buffer_cells   {CKBD1BWP7T40P140LVT CKBD2BWP7T40P140LVT CKBD4BWP7T40P140LVT CKBD8BWP7T40P140LVT CKBD16BWP7T40P140LVT CKBD20BWP7T40P140LVT}
 set_ccopt_mode -cts_inverter_cells {INVD1BWP7T40P140LVT INVD2BWP7T40P140LVT INVD4BWP7T40P140LVT INVD8BWP7T40P140LVT}
 
 # Filler settings  [setFillerMode -help]

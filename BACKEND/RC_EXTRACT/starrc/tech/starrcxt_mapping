@@ -1,0 +1,481 @@
+conducting_layers
+n_poly			n_fpoly
+p_poly			p_fpoly
+n_poly3			n_fpoly
+p_poly3			p_fpoly
+n_poly_rf		n_fpoly
+p_poly_rf		p_fpoly
+**** metal_interface         metal_interface     **** uncomment this line if there is metal_interface supported in RC techfiles
+metal_interface         p_fpoly                    **** comment this line if there is metal_interface supported in RC techfiles
+vargt    		n_fpoly
+vargt_25 		n_fpoly
+vargt_p         	p_fpoly
+vargt_25_p      	p_fpoly
+
+vargt_edc		n_fpoly
+vargt_15 		n_fpoly
+vargt_18 		n_fpoly
+vargt_33 		n_fpoly
+vargt_18_p      	p_fpoly
+
+M1			M1
+M2			M2
+M3			M3
+M4			M4
+M5			M5
+M6			M6
+M7			M7
+M8			M8
+M9			M9
+M10			M10
+AP			AP	***** move to remove layer if no RDL
+
+indm11c			AP	***** move to remove layer if no RDL
+indm10p			M10
+indm10m			M10
+
+
+
+
+mom3p1			M3
+mom3p2			M3
+mom3m1			M3
+mom3m2			M3
+mom4p1			M4
+mom4p2			M4
+mom4m1			M4
+mom4m2			M4
+mom5p1			M5
+mom5p2			M5
+mom5m1			M5
+mom5m2			M5
+mom6p1			M6
+mom6p2			M6
+mom6m1			M6
+mom6m2			M6
+mom7p1			M7
+mom7p2			M7
+mom7m1			M7
+mom7m2			M7
+mom8p1			M8
+mom8p2			M8
+mom8m1			M8
+mom8m2			M8
+mom9p1			M9
+mom9p2			M9
+mom9m1			M9
+mom9m2			M9
+
+PROBEM1_T	SUBSTRATE
+PROBEM1_B	SUBSTRATE
+PROBEM2_T	SUBSTRATE
+PROBEM2_B	SUBSTRATE
+PROBEM3_T	SUBSTRATE
+PROBEM3_B	SUBSTRATE
+PROBEM4_T	SUBSTRATE
+PROBEM4_B	SUBSTRATE
+PROBEM5_T	SUBSTRATE
+PROBEM5_B	SUBSTRATE
+PROBEM6_T	SUBSTRATE
+PROBEM6_B	SUBSTRATE
+PROBEM7_T	SUBSTRATE
+PROBEM7_B	SUBSTRATE
+PROBEM8_T	SUBSTRATE
+PROBEM8_B	SUBSTRATE
+
+**** NMOS mapping ******
+***** By default Hercules set ZERO_NRS_NRS = 1 and CCI #define ZERO_NRS_NRD.
+***** If Hercules set ZERO_NRS_NRD = 0 or CCI //#define ZERO_NRS_NRD, user has to set RPSQ of tndiff/tpdiff to zero(RPSQ=0.0000001) to avoid double count.
+tndiff					NOD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+tndiff_woR	   	       	  	NOD	RPSQ=0.0000001
+s_tndiff_udm				NOD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+d_tndiff_udm				NOD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+s_tndiff_hv				NOD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+d_tndiff_hv				NOD	RPSQ=0.0000001
+ngate_mac           			n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+nlgate_mac             			n_gpoly TABLE_NAME=HP_NA_CORE	*
+ngate_25_mac        			n_gpoly TABLE_NAME=HP_2D5VIO_NMOS	*
+ngate_25na_mac         			n_gpoly TABLE_NAME=HP_NA_2D5VIO	*
+ngate_svt_sp_mac       			n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+nuvgate_mac         			n_gpoly TABLE_NAME=HP_ULVT_CORE_NMOS	*
+ngate_15_mac        			n_gpoly TABLE_NAME=HP_1D5VIO_NMOS	*
+ngate_15od18_mac   			n_gpoly TABLE_NAME=HP_1D5VIO_NMOS	*
+ngate_15na_mac  			n_gpoly TABLE_NAME=HP_NA_1D5VIO	*
+ngate_18_mac        			n_gpoly TABLE_NAME=HP_1D8VIO_NMOS	*
+ngate_hvspd         			n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS	*
+nilvtgate_mac       			n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+nhvgate_mac         			n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS	*
+ngate_18na_mac         			n_gpoly TABLE_NAME=HP_NA_1D8VIO	*
+nchvgate_mac				n_gpoly TABLE_NAME=HP_CHVT_CORE_NMOS *
+ngate_lvt18ud12_mac			n_gpoly TABLE_NAME=HP_1D8VIO_NMOS
+ngate_hv18_mac			        n_gpoly TABLE_NAME=HP_1D8VIO_NMOS *
+nelvgate_mac         			n_gpoly TABLE_NAME=HP_ULVT_CORE_NMOS	*
+
+nlvgate_mac         			n_gpoly TABLE_NAME=HP_LVT_CORE_NMOS	*
+ngate_hia_mac				n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+ngate_hia25_mac				n_gpoly TABLE_NAME=HP_2D5VIO_NMOS	*
+ngate_hia15_mac				n_gpoly TABLE_NAME=HP_1D5VIO_NMOS	*
+ngate_hia18_mac				n_gpoly TABLE_NAME=HP_1D8VIO_NMOS	*
+ngate_udm_mac				n_gpoly TABLE_NAME=HP_UDM_CORE_NMOS
+ngate_udm18_mac				n_gpoly TABLE_NAME=HP_UDM_1D8VIO_NMOS
+ngate_udm18ud15_mac			n_gpoly TABLE_NAME=HP_UDM_1D8VIO_NMOS
+nzvgate_mac				n_gpoly TABLE_NAME=HP_ZVT_CORE *
+ngate_18ud12_mac			n_gpoly TABLE_NAME=HP_1D8VIO_NMOS	*
+ngate_18ud15_mac			n_gpoly TABLE_NAME=HP_1D8VIO_NMOS	*
+ngate_18naud15_mac			n_gpoly TABLE_NAME=HP_NA_1D8VIO	*
+ngate_33na_mac				n_gpoly TABLE_NAME=HP_NA_3D3VIO	*
+ngate_33_mac        			n_gpoly TABLE_NAME=HP_3D3VIO_NMOS	*
+ngate_hvspg         			n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS	*
+ngate_25naud_mac			n_gpoly TABLE_NAME=HP_NA_2D5VIO	*
+ngate_25naod_mac			n_gpoly TABLE_NAME=HP_NA_2D5VIO	*
+ngate_io_lvt_mac			n_gpoly TABLE_NAME=HP_1D8VIO_NMOS
+ngate_25od_mac				n_gpoly TABLE_NAME=HP_2D5VIO_NMOS	*
+ngate_25ud_mac				n_gpoly TABLE_NAME=HP_2D5VIO_NMOS	*
+ngate_hg_mac           			n_gpoly TABLE_NAME=HP_HG_NMOS	*
+ngate_edc_mac				n_gpoly TABLE_NAME=HP_EDC_NMOS    *
+nuhvgate_hg_mac                         n_gpoly TABLE_NAME=HP_HG_UHVT_NMOS	*
+nuhvgate_mac         			n_gpoly TABLE_NAME=HP_UHVT_CORE_NMOS	*
+nehvgate_mac         			n_gpoly TABLE_NAME=HP_UHVT_CORE_NMOS	*
+navtgate_mac         			n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+
+
+
+**** PMOS mapping ******
+***** By default Hercules set ZERO_NRS_NRS = 1 and CCI #define ZERO_NRS_NRD.
+***** If Hercules set ZERO_NRS_NRD = 0 or CCI //#define ZERO_NRS_NRD, user has to set RPSQ of tndiff/tpdiff to zero(RPSQ=0.0000001) to avoid double count.
+tpdiff					POD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+tpdiff_woR	   	       	  	POD	RPSQ=0.0000001
+s_tpdiff_udm				POD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+d_tpdiff_udm				POD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+s_tpdiff_hv				POD	***** Set RPSQ=0.0000001 if turning off ZERO_NRS_NRD
+d_tpdiff_hv				POD	RPSQ=0.0000001
+pilvtgate_mac       			p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+phvgate_mac         			p_gpoly TABLE_NAME=HP_HVT_CORE_PMOS	*
+pgate_svt_sp_mac       			p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+puvgate_mac				p_gpoly TABLE_NAME=HP_ULVT_CORE_PMOS *
+pgate_hvs           			p_gpoly TABLE_NAME=HP_HVT_CORE_PMOS	*
+pgate_33_mac        			p_gpoly TABLE_NAME=HP_3D3VIO_PMOS	*
+pgate_18_mac        			p_gpoly TABLE_NAME=HP_1D8VIO_PMOS	*
+pgate_18ud12_mac			p_gpoly TABLE_NAME=HP_1D8VIO_PMOS	*
+pgate_18ud15_mac			p_gpoly TABLE_NAME=HP_1D8VIO_PMOS	*
+pgate_mac           			p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+plvgate_mac         			p_gpoly TABLE_NAME=HP_LVT_CORE_PMOS	*
+pgate_25_mac        			p_gpoly TABLE_NAME=HP_2D5VIO_PMOS	*
+pgate_25od_mac				p_gpoly TABLE_NAME=HP_2D5VIO_PMOS	*
+pgate_25ud_mac				p_gpoly TABLE_NAME=HP_2D5VIO_PMOS	*
+pgate_hg_mac           			p_gpoly TABLE_NAME=HP_HG_PMOS	*
+alvtpgate_mac				p_gpoly TABLE_NAME=HP_ALVT_CORE_PMOS *
+pelvgate_mac				p_gpoly TABLE_NAME=HP_ULVT_CORE_PMOS *
+puhvgate_hg_mac                         p_gpoly TABLE_NAME=HP_HG_UHVT_PMOS	*
+puhvgate_mac         			p_gpoly TABLE_NAME=HP_UHVT_CORE_PMOS	*
+pehvgate_mac         			p_gpoly TABLE_NAME=HP_UHVT_CORE_PMOS	*
+pavtgate_mac         			p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+
+***** LPG/SRAM mapping *****
+ngate_spd           			n_gpoly TABLE_NAME=HP_CORE_NMOS	*
+ngate_spg           			n_gpoly	TABLE_NAME=HP_CORE_NMOS *
+ngate_siopg             n_gpoly TABLE_NAME=HP_1D2VIO_NMOS *
+ngate_siopd             n_gpoly TABLE_NAME=HP_1D2VIO_NMOS *
+pgate_sio               p_gpoly TABLE_NAME=HP_1D2VIO_PMOS *
+ngate_stgopg            n_gpoly TABLE_NAME=HP_1D8VIO_NMOS *
+ngate_stgopd            n_gpoly TABLE_NAME=HP_1D8VIO_NMOS *
+pgate_stgo              p_gpoly TABLE_NAME=HP_1D8VIO_PMOS *
+ngate_sdppd				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_sdppg				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_rpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+pgate_udm_mac				p_gpoly TABLE_NAME=HP_UDM_CORE_PMOS
+pgate_udm18_mac				p_gpoly TABLE_NAME=HP_UDM_1D8VIO_PMOS
+pgate_udm18ud15_mac			p_gpoly TABLE_NAME=HP_UDM_1D8VIO_PMOS
+pgate_hv18_mac			        p_gpoly TABLE_NAME=HP_1D8VIO_PMOS *
+ngate_qrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_rom				n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS  *
+ngate_pg_lpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pd_lpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_lprpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_lpqrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pg_llsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pd_llsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_llrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pg_lldpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pd_lldpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pg_lpdpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pd_lpdpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_hvtrpsr				n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS  *
+ngate_svtrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_hvtllrpsr				n_gpoly TABLE_NAME=HP_HVT_CORE_NMOS  *
+ngate_svtllrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_hlsvtqrpsr			n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_hltrpsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pd_hltsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+ngate_pg_hltsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+pgate_pu_hltsr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_pu_lpsr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_pu_llsr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_pu_lldpsr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_pu_lpdpsr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_s_2psr				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+ngate_lvtrpsr				n_gpoly TABLE_NAME=HP_LVT_CORE_NMOS  *
+ngate_rpdsr				n_gpoly TABLE_NAME=HP_CORE_NMOS *
+pgate_s             			p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_sdp				p_gpoly TABLE_NAME=HP_CORE_PMOS	*
+pgate_15_mac       			p_gpoly TABLE_NAME=HP_1D5VIO_PMOS	*
+pgate_15od18_mac   			p_gpoly TABLE_NAME=HP_1D5VIO_PMOS	*
+
+***** diode mapping *****
+psub                			SUBSTRATE	precedence = 1
+nxwell              			SUBSTRATE	precedence = 2
+nw_pgdio              			SUBSTRATE
+***** BJT PNP mapping *****
+coll1               			SUBSTRATE
+cnbase1             			SUBSTRATE
+ncoll1              			SUBSTRATE
+cpbase1             			SUBSTRATE
+cemit1              			POD
+cnemit1             			NOD
+tiod					NOD
+***** BJT NPN mapping *****
+***** RES mapping *****
+***** XDEV mapping *****
+** user defined mapping .....**
+tndiff_RC		NOD
+tpdiff_RC		POD
+tndiff_ic		NOD
+tpdiff_ic		POD
+tndiff_dmy		NOD
+tpdiff_dmy		POD
+nxwell_npn		SUBSTRATE
+inbase1		SUBSTRATE
+iemit1		POD
+ipbase1		SUBSTRATE
+inemit1		NOD
+DNW		SUBSTRATE
+psub_term	SUBSTRATE     **** move  to remove layer if VARIABLE STRING extract_dnwdio = "no"
+s_tpdiff	POD
+d_tndiff	NOD
+s_tndiff	NOD
+d_tpdiff	POD
+poly_term	SUBSTRATE
+poly_psub_via   SUBSTRATE
+poly_nw_via	SUBSTRATE
+dnwc		SUBSTRATE
+rfdmy56		SUBSTRATE
+rfdmy56_via	SUBSTRATE
+RFDMY_HIA_bulk  SUBSTRATE
+RFDMY_HIA_psub	SUBSTRATE
+hia_rf_via	SUBSTRATE
+ydio_t		NOD
+
+via_layers
+***polyCont	polyCont
+n_polyCont	n_polyCont
+p_polyCont	p_polyCont
+***odCont        odCont
+n_odCont        n_odCont
+p_odCont        p_odCont
+
+
+
+
+VIA1	VIA1
+VIA2	VIA2
+VIA3	VIA3
+VIA4	VIA4
+VIA5	VIA5
+VIA6	VIA6
+VIA7	VIA7
+VIA8	VIA8
+VIA9	VIA9
+RV	RV			***** move to remove layer if no RDL
+
+nplug		n_weltap
+pplug		p_weltap
+nplug_dmy	n_weltap
+pplug_dmy	p_weltap
+hia_rf_pplug    p_weltap
+
+marker_layers
+M1_pin
+M2_pin
+M3_pin
+M4_pin
+M5_pin
+M6_pin
+M7_pin
+M8_pin
+M9_pin
+M10_pin
+AP_pin				***** move to remove layer if no RDL
+n_poly_pin
+p_poly_pin
+
+ignore_cap_layers
+vargt		tndiff	nxwell
+vargt_25 	tndiff	nxwell
+vargt_p         tpdiff	psub
+vargt_25_p      tpdiff	psub
+
+vargt_edc	tndiff	nxwell
+vargt_15 	tndiff	nxwell
+vargt_18 	tndiff	nxwell
+vargt_33 	tndiff	nxwell
+vargt_18_p      tpdiff	psub
+
+tndiff_woR	psub
+tpdiff_woR	nxwell
+
+remove_layers
+ctm_10
+cbm_10
+ctm_9
+cbm_9
+p3
+crown
+p3Cont
+n_blc
+p_blc
+ctm_via9
+cbm_via9
+ctm_via8
+cbm_via8
+OD_id
+
+odCont
+
+
+
+rupolym_rfr
+
+M1_mark
+M2_mark
+M3_mark
+M4_mark
+M5_mark
+M6_mark
+M7_mark
+M8_mark
+M9_mark
+M10_mark
+
+mt1res
+mt2res
+mt3res
+mt4res
+mt5res
+mt6res
+mt7res
+mt8res
+mt9res
+mt10res
+mtAPres
+AP_mark
+nxwell_float
+poly_pin
+poly_mark
+n_poly_mark
+p_poly_mark
+ntap_not_var
+PROBEM1
+PROBEM2
+PROBEM3
+PROBEM4
+PROBEM5
+PROBEM6
+PROBEM7
+PROBEM8
+pgate_pthin_25
+MOM_rec3_01
+ct_ind
+ct_ind_mza_a
+MOM_rec3_012
+pgate_pthin_mlv
+ngate_nthin_33
+pgate_pthin_25ud
+pgate_pthin_25nwud
+pgate_pthin_25od
+sym_ind
+sym_ind_mza_a
+pgate_pthin
+std_ind
+std_ind_mza_a
+pgate_pthin_33nw
+pgate_pthin_lv
+pgate_pthin_hv
+dnwdio
+var_nw_rf33
+pgate_pthin_mlvnw
+pgate_pthin_33
+ngate_nthin_mlv
+pgate_pthin_18
+jvar_rf
+pgate_pthin_25nwod
+vargt_od1t
+var_nw_rf33_nw
+polyCont
+rnods_mr
+rnods_r
+pgate_pthin_18nw
+var_nw_rf18
+ngate_nthin_25ud
+ngate_nthin_25
+pgate_pthin_hvnw
+pgate_pthin_25nw
+var_nw_rf25_nw
+ngate_nthin_hv
+var_nw_rf25
+ngate_nthin_25od
+var_nw_rf18_nw
+var_nw3_rf_nw
+pgate_pthin_lvnw
+ngate_nthin_18
+pgate_pthin_nw
+ngate_nthin
+var_nw3_rf
+ngate_nthin_lv
+rpods_r
+rnodwo_mr
+rpods_mr
+rpodwo_mr
+nwsti_r
+rpodwo_r
+nwsti_mr
+rnodl_r
+rnodwo_r
+rnodl_mr
+nwod_mr
+rpodl_r
+nwod_r
+rpodl_mr
+******
+****** following connect layer does not form device.
+****** user need adjust wherever following mapping is right or not.
+******
+gate1_not_IO2_not_IO2
+c_nmcore
+mim_block
+gate1
+gate1_not_IO2
+n_psub
+n_diff_mom
+p_diff_mom
+ptap
+ntap
+n_pplug
+MOM_field1
+MOM_field2
+MOM_field3
+MOM_field4
+MOM_field5
+MOM_field6
+MOM_field7
+MOM_field8
+MOM_field9
+poly
+rupolym_r
+rupolym_d
+rnmg_r
+rnmg_d
+rpmg_r
+rpmg_d
+all_sd_cop
+all_sd
+********

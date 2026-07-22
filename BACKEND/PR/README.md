@@ -1,4 +1,4 @@
-# 5-PR：Place & Route 流程说明
+# BACKEND/PR：Place & Route 流程说明
 
 本目录是 `multiplier_pipe3` 的 Innovus Place & Route（P&R）工程。流程由 Flowkit 定义，使用项目脚本完成 floorplan、布局优化、CTS、布线、post-route 优化、时序报告和交付物输出。
 
@@ -21,7 +21,7 @@ outputs/                 通过 gate 后生成的网表、DEF、SPEF 和 manifes
 
 ```bash
 docker exec -it gb_env bash
-cd /data1/GB/ic_workbench/5-PR
+cd /data1/GB/ic_workbench/BACKEND/PR
 innovus -version
 flowtool -version
 ```
