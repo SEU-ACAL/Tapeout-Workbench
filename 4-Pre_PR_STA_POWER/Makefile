@@ -1,26 +1,34 @@
 SHELL := /bin/bash
 
+TECH ?= tsmc28
+TECH_CONFIG := scripts/tech/$(TECH).mk
+ifeq ($(wildcard $(TECH_CONFIG)),)
+$(error Unknown TECH '$(TECH)'; expected a configuration under scripts/tech)
+endif
+include $(TECH_CONFIG)
+
 NETLIST_RUN ?= 0720_1845
 TOP ?= ChipTop
 NETLIST ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/$(TOP).v
 SDC ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/$(TOP).sdc
 SDF_OUT ?= $(CURDIR)/../3-Pre_PR_NETSIM/inputs/$(NETLIST_RUN)/$(TOP).sdf
 FSDB ?= $(CURDIR)/../3-Pre_PR_NETSIM/gen/chipyard.harness.TestHarness.TapeoutConfig/$(NETLIST_RUN)/run-zero.fsdb
-POWER_OUT_DIR ?= $(CURDIR)/outputs/$(NETLIST_RUN)/zero-fsdb
+POWER_OUT_DIR ?= $(CURDIR)/outputs/$(TECH)/$(NETLIST_RUN)/zero-fsdb
 ACTIVITY_STRIP_PATH ?= TestDriver/testHarness/chiptop0
 POWER_START_NS ?= 1000
-STD_CELL_DB ?=
-SRAM_ROOT ?=
-SRAM_CORNER ?= ssg0p81v125c
+STD_CELL_DB ?= $(TECH_STD_CELL_DB)
+SRAM_ROOT ?= $(TECH_SRAM_ROOT)
+SRAM_CORNER ?= $(TECH_SRAM_CORNER)
+SRAM_DB_TEMPLATE ?= $(TECH_SRAM_DB_TEMPLATE)
 PT_SHELL ?= pt_shell
 
 .PHONY: help check-config sdf power clean-sdf
 
 help:
 	@printf '%s\n' \
-	  'make sdf [NETLIST_RUN=<run>]  Export ChipTop MAXIMUM SDF for GLS.' \
-	  'make power [NETLIST_RUN=<run>] Report averaged power directly from a zero-delay FSDB.' \
-	  'Set STD_CELL_DB and SRAM_ROOT in the environment.' \
+	  'make sdf [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Export ChipTop MAXIMUM SDF for GLS.' \
+	  'make power [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Report averaged power directly from a zero-delay FSDB.' \
+	  'TECH defaults to tsmc28; STD_CELL_DB, SRAM_ROOT, SRAM_CORNER, and SRAM_DB_TEMPLATE remain overridable.' \
 	  'Override NETLIST, SDC, SDF_OUT, FSDB, TOP, PT_SHELL, or POWER_START_NS as needed.'
 
 check-config:
@@ -35,6 +43,9 @@ sdf: check-config $(NETLIST) $(SDC) scripts/pt_chiptop_sdf.tcl scripts/chiptop_c
 	 STDCELL_DB='$(abspath $(STD_CELL_DB))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
+	 SRAM_DB_TEMPLATE='$(SRAM_DB_TEMPLATE)' \
+	 TECH='$(TECH)' \
+	 TECH_CORNER='$(TECH_CORNER)' \
 	 TOP='$(TOP)' \
 	 $(PT_SHELL) -f scripts/pt_chiptop_sdf.tcl | tee $(dir $(SDF_OUT))/pt-sdf.log
 	@grep -q 'Wrote SDF:' $(dir $(SDF_OUT))/pt-sdf.log
@@ -51,6 +62,9 @@ power: check-config $(FSDB) scripts/pt_chiptop_power.tcl scripts/chiptop_common.
 	 STDCELL_DB='$(abspath $(STD_CELL_DB))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
+	 SRAM_DB_TEMPLATE='$(SRAM_DB_TEMPLATE)' \
+	 TECH='$(TECH)' \
+	 TECH_CORNER='$(TECH_CORNER)' \
 	 $(PT_SHELL) -file scripts/pt_chiptop_power.tcl -output_log_file $(POWER_OUT_DIR)/power.log
 	@grep -q 'Wrote power reports to' $(POWER_OUT_DIR)/power.log
 

@@ -5,7 +5,7 @@ proc require_env {name} {
     return $::env($name)
 }
 
-proc chiptop_sram_link_library {sram_root sram_corner} {
+proc chiptop_sram_link_library {sram_root sram_corner sram_db_template} {
     set sram_names [list \
         chipyard_sram_32x22 \
         chipyard_sram_512x64 \
@@ -15,7 +15,8 @@ proc chiptop_sram_link_library {sram_root sram_corner} {
         chipyard_sram_512x32]
     set libraries [list]
     foreach sram_name $sram_names {
-        lappend libraries "$sram_root/$sram_name/NLDM/${sram_name}_${sram_corner}.db"
+        set relative_db [format $sram_db_template $sram_name $sram_corner]
+        lappend libraries [file join $sram_root $sram_name $relative_db]
     }
     return $libraries
 }

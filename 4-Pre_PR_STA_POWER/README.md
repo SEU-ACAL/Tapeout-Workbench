@@ -8,12 +8,26 @@ generated first with `WAVEFORM=1` in `3-Pre_PR_NETSIM`.
 
 ## Environment
 
-Set technology paths outside the Makefile:
+Select the technology directly. `tsmc28` remains the default:
 
 ```sh
-export STD_CELL_DB=/path/to/standard-cell-power.db
-export SRAM_ROOT=/path/to/sram/library/root
-export SRAM_CORNER=ssg0p81v125c
+make -C 4-Pre_PR_STA_POWER power TECH=tsmc28 NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run>
+```
+
+The SMIC180 configuration uses the available standard-cell `SS 1.08V/125C`
+view and S018SP SRAM `SS 1.62V/125C` view. This is a worst-case timing/power
+estimate; the CDKs do not provide a voltage-consistent SS pair, so it is not a
+signoff power corner.
+
+Technology configuration files set `STD_CELL_DB`, `SRAM_ROOT`, `SRAM_CORNER`,
+and the SRAM DB layout. All remain overridable from the command line for a
+different characterized corner:
+
+```sh
+make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run> \
+  STD_CELL_DB=/path/to/stdcell.db SRAM_ROOT=/path/to/sram-root \
+  SRAM_CORNER=<corner> SRAM_DB_TEMPLATE='%s_%s.db'
 ```
 
 `PT_SHELL` defaults to `pt_shell`. Use PrimePower W-2024 or later: the
@@ -38,7 +52,7 @@ make -C 3-Pre_PR_NETSIM run_zero NETLIST_RUN=0720_1845 WAVEFORM=1 \
 Run averaged power analysis:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER power TECH=tsmc28 NETLIST_RUN=0720_1845
 ```
 
 The target reads `run-zero.fsdb` directly. It analyzes activity after `1000 ns`,
@@ -50,7 +64,7 @@ make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0720_1845 \
   FSDB=/path/to/run-zero.fsdb POWER_START_NS=2000
 ```
 
-Reports are written under `outputs/<netlist-run>/zero-fsdb/`:
+Reports are written under `outputs/<technology>/<netlist-run>/zero-fsdb/`:
 
 - `power_total.rpt`: total internal, switching, leakage, and total power
 - `power_hierarchy.rpt`: hierarchy breakdown
@@ -65,7 +79,7 @@ parasitics, so it is suitable for workload comparison but not signoff.
 Export MAXIMUM timing checks and delays for the matching synthesized netlist:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER sdf NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER sdf TECH=tsmc28 NETLIST_RUN=0720_1845
 ```
 
 The default SDF output is

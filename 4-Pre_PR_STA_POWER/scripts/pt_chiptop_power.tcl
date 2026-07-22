@@ -14,14 +14,18 @@ set power_out_dir [require_env POWER_OUT_DIR]
 set stdcell_db [require_env STDCELL_DB]
 set sram_root [require_env SRAM_ROOT]
 set sram_corner [require_env SRAM_CORNER]
+set sram_db_template [require_env SRAM_DB_TEMPLATE]
+set technology [require_env TECH]
+set technology_corner [require_env TECH_CORNER]
 
-set sram_link_library [chiptop_sram_link_library $sram_root $sram_corner]
+set sram_link_library [chiptop_sram_link_library $sram_root $sram_corner $sram_db_template]
 require_files "power analysis" [concat [list $netlist $sdc_file $fsdb_file $stdcell_db] $sram_link_library]
 
 set target_library $stdcell_db
 set link_library [concat * $stdcell_db $sram_link_library]
 
 load_chiptop_design $top_design $netlist $sdc_file
+puts "Power technology: $technology, standard-cell corner: $technology_corner, SRAM corner: $sram_corner"
 
 file mkdir $power_out_dir
 redirect "$power_out_dir/check_timing.rpt" { check_timing -verbose }
