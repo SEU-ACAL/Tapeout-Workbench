@@ -14,18 +14,18 @@ set ::SITE_LEF [file join $::PR_ROOT scripts core7T.lef]
 set ::LIB_ROOT /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140lvt_180a
 set ::LIB_SS [file join $::LIB_ROOT tcbn28hpcplusbwp7t40p140lvtssg0p81v125c_ccs.lib]
 set ::LIB_FF [file join $::LIB_ROOT tcbn28hpcplusbwp7t40p140lvtffg1p05vm40c_ccs.lib]
-set ::TECH_LEF /data2/TSMC28/TF/N28_PRTF_Cad_v1d5a/PR_tech/Cadence/LefHeader/HVH/tsmcn28_10lm5X2Y2RUTRDL.tlef
+set ::TECH_LEF /data2/TSMC28/TF/N28_PRTF_Cad_v1d5a/PR_tech/Cadence/LefHeader/HVH/tsmcn28_10lm5X2Y2ZUTRDL.tlef
 
-# Do not use $QRC_ROOT/qrcTechFile: it is the Cbest file.  The non-_T files
-# below are the characterized default QRC corners.  The _T variants remain
-# available in the PDK but are intentionally not selected without PDK guidance.
+# The non-_T 1P10M_5X2Y2Z files below are the characterized default QRC
+# corners.  The _T variants remain available in the PDK but are intentionally
+# not selected without PDK guidance.
 set ::QRC_ROOT /data2/TSMC28/TF
 set ::QRC_TECH_FILES [dict create \
-  rc_worst   [file join $::QRC_ROOT 1p10m_rcworst qrcTechFile] \
-  rc_best    [file join $::QRC_ROOT 1p10m_rcbest qrcTechFile] \
-  c_worst    [file join $::QRC_ROOT 1p10m_cworst qrcTechFile] \
-  c_best     [file join $::QRC_ROOT 1p10m_cbest qrcTechFile] \
-  rc_typical [file join $::QRC_ROOT 1p10m_typical qrcTechFile]]
+  rc_worst   [file join $::QRC_ROOT 1p10m_5x2y2z_rcworst qrcTechFile] \
+  rc_best    [file join $::QRC_ROOT 1p10m_5x2y2z_rcbest qrcTechFile] \
+  c_worst    [file join $::QRC_ROOT 1p10m_5x2y2z_cworst qrcTechFile] \
+  c_best     [file join $::QRC_ROOT 1p10m_5x2y2z_cbest qrcTechFile] \
+  rc_typical [file join $::QRC_ROOT 1p10m_5x2y2z_typical qrcTechFile]]
 
 # QRC supplies the physical R/C model.  These unity factors document that no
 # additional unqualified derate is being layered onto that model.
