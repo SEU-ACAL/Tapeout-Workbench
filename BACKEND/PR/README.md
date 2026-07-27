@@ -12,7 +12,7 @@ runs/<run_name>/         每次运行的数据库、日志和中间文件
 reports/final/           最终报告
 reports/final/timing/    按 setup/hold、view、path group 分层的时序报告
 reports/final/timing_debug/  Innovus timeDesign 的详细压缩报告
-outputs/                 通过 gate 后生成的网表、DEF、SPEF 和 manifest
+outputs/                 通过 gate 后生成的网表、DEF、SPEF、merged GDSII 和 manifest
 ```
 
 ## 2. 环境和工具检查
@@ -147,8 +147,15 @@ outputs/multiplier_pipe3.v
 outputs/multiplier_pipe3.def
 outputs/multiplier_pipe3.rc_worst.spef
 outputs/multiplier_pipe3.rc_best.spef
+outputs/multiplier_pipe3.gds
+outputs/multiplier_pipe3.streamout.rpt
+outputs/gds2.map
 outputs/manifest.txt
 ```
+
+`write_outputs` 在 final signoff gate 通过后，使用当前 Innovus 数据库导出
+merged GDSII，并将标准单元 GDS 合并到 `outputs/<top>.gds`。因此 GDS 与门级
+Verilog 均来自同一次最终 P&R 发布，可直接作为后续 DRC/LVS 输入。
 
 同时检查最终报告：
 
@@ -168,3 +175,9 @@ less reports/final/io_pin_placement.rpt
 - IR/EM 分析尚未接入本 PR flow。
 - 修改 pin plan 后必须从 floorplan 重新完整运行；不能复用缺少端口位置的 CTS 数据库。
 - `scripts/run_flow.tcl` 是 Innovus 内使用的标准入口；不要用不匹配的 `flowtool` 命令替代 Innovus 执行本流程。
+
+## 11. DRC/LVS 物理验证
+
+Calibre DRC/LVS 已作为独立后端阶段移至 `BACKEND/DRC_LVS/`。P&R 负责交付
+`outputs/<top>.gds` 和 `outputs/<top>.v`；验证阶段显式接收这些文件，结果不再
+写入本目录。具体命令见 `../DRC_LVS/README.md`。

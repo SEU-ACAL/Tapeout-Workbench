@@ -273,6 +273,46 @@ create_flow_step -name gate_final_signoff -owner design -exclude_time_metric {
   puts "PR_SIGNOFF_CHECK name=final status=pass"
 }
 
+proc ::pr_write_merged_gds {out_dir} {
+  foreach required_file [list $::PR_GDS_MAP_GENERATOR $::PR_STDCELL_GDS] {
+    if {![file isfile $required_file]} {
+      error "Required GDS export input is missing: $required_file"
+    }
+  }
+
+  set map_file [file join $out_dir gds2.map]
+  set original_dir [pwd]
+  set map_status [catch {
+    cd $out_dir
+    exec $::PR_GDS_MAP_GENERATOR -layer 10 -top 2 -type Z -metalY 2
+  } map_message map_options]
+  cd $original_dir
+  if {$map_status != 0} {
+    return -options $map_options "GDS layer-map generation failed: $map_message"
+  }
+  if {![file isfile $map_file]} {
+    error "GDS layer-map generation did not create $map_file"
+  }
+
+  set gds_file [file join $out_dir $::TOP_MODULE.gds]
+  set report_file [file join $out_dir $::TOP_MODULE.streamout.rpt]
+  streamOut $gds_file \
+    -libName $::TOP_MODULE \
+    -structureName $::TOP_MODULE \
+    -mapFile $map_file \
+    -merge $::PR_STDCELL_GDS \
+    -mode ALL \
+    -units 1000 \
+    -dieAreaAsBoundary \
+    -reportFile $report_file \
+    -format stream
+
+  if {![file isfile $gds_file]} {
+    error "GDS export did not create $gds_file"
+  }
+  return [dict create gds $gds_file map $map_file report $report_file]
+}
+
 create_flow_step -name write_outputs -owner design -write_db {
   if {![info exists ::PR_FINAL_SIGNOFF_STATUS] || $::PR_FINAL_SIGNOFF_STATUS ne "pass"} {
     error "Final outputs are blocked until all signoff checks pass"
@@ -288,6 +328,7 @@ create_flow_step -name write_outputs -owner design -write_db {
   foreach rc_corner {rc_worst rc_best} {
     rcOut -spef [file join $out_dir $::TOP_MODULE.$rc_corner.spef] -rc_corner $rc_corner
   }
+  set gds_artifacts [::pr_write_merged_gds $out_dir]
 
   set manifest [open [file join $out_dir manifest.txt] w]
   set tool_version unknown
@@ -306,6 +347,10 @@ create_flow_step -name write_outputs -owner design -write_db {
   puts $manifest "input_netlist=$::NETLIST"
   puts $manifest "input_pr_sdc=$::SDC"
   puts $manifest "input_upstream_sdc=$::PR_UPSTREAM_SDC"
+  puts $manifest "gds=[dict get $gds_artifacts gds]"
+  puts $manifest "gds_layer_map=[dict get $gds_artifacts map]"
+  puts $manifest "gds_streamout_report=[dict get $gds_artifacts report]"
+  puts $manifest "gds_stdcell_library=$::PR_STDCELL_GDS"
   foreach spec $::PR_MMMC_VIEW_SPECS {
     lassign $spec view library_set rc_corner check_type
     lassign [dict get $::PR_LIBRARY_PVT $library_set] voltage temperature

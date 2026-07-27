@@ -10,6 +10,8 @@ set ::PR_SDC_UPSTREAM_DIR [file join $::PR_ROOT .. 2-SYN outputs 0715_0544]
 set ::PR_CLOCK_PORT clock
 
 set ::CELL_LEF /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/lef/tcbn28hpcplusbwp7t40p140lvt.lef
+set ::PR_GDS_MAP_GENERATOR /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/techfiles/gds2map.sh
+set ::PR_STDCELL_GDS /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/gds/tcbn28hpcplusbwp7t40p140lvt_110a/tcbn28hpcplusbwp7t40p140lvt.gds
 set ::SITE_LEF [file join $::PR_ROOT scripts core7T.lef]
 set ::LIB_ROOT /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140lvt_180a
 set ::LIB_SS [file join $::LIB_ROOT tcbn28hpcplusbwp7t40p140lvtssg0p81v125c_ccs.lib]
@@ -78,7 +80,7 @@ set ::PR_FINAL_REPORT_DIR [file join $::PR_ROOT reports final]
 # dict set ::PR_SIGNOFF_WAIVERS drc "waiver-id: reason"
 set ::PR_SIGNOFF_WAIVERS [dict create]
 
-foreach file [concat [list $::NETLIST $::SDC $::TECH_LEF $::SITE_LEF $::CELL_LEF $::LIB_SS $::LIB_FF] [dict values $::QRC_TECH_FILES]] {
+foreach file [concat [list $::NETLIST $::SDC $::TECH_LEF $::SITE_LEF $::CELL_LEF $::LIB_SS $::LIB_FF $::PR_GDS_MAP_GENERATOR $::PR_STDCELL_GDS] [dict values $::QRC_TECH_FILES]] {
   if {![file exists $file]} {
     error "Required PR input is missing: $file"
   }
