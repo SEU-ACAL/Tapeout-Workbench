@@ -42,10 +42,10 @@ set_clock_uncertainty [expr $PAD_cpu_clock_period * 0.3]        [get_clocks cloc
 set_clock_transition  [expr $PAD_cpu_clock_period * 0.1]        [get_clocks clock]
 
 
-# Input/Output Delay设置 (period的70%)
+# Input/Output Delay设置 (period的50%)
 
-set_input_delay   [expr $PAD_cpu_clock_period * 0.7]        -clock [get_clocks clock] $data_inputs            
-set_output_delay  [expr $PAD_cpu_clock_period * 0.7]        -clock [get_clocks clock] $data_outputs
+set_input_delay   [expr $PAD_cpu_clock_period * 0.5]        -clock [get_clocks clock] $data_inputs
+set_output_delay  [expr $PAD_cpu_clock_period * 0.5]        -clock [get_clocks clock] $data_outputs
 
 
 
