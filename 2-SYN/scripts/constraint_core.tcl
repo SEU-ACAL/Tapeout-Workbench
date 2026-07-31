@@ -8,7 +8,7 @@ set     MAX_TRAN                 2
 ##### 时钟周期参数定义 ###########################################################
 
 if {![info exists CLOCK_PERIOD]} {
-    set CLOCK_PERIOD 1.0
+    set CLOCK_PERIOD 10.0
 }
 if {![string is double -strict $CLOCK_PERIOD] || ![expr {$CLOCK_PERIOD > 0.0}]} {
     error "CLOCK_PERIOD must be a positive number in nanoseconds, got '$CLOCK_PERIOD'"
@@ -34,8 +34,9 @@ create_clock [get_ports clock] 									-period $PAD_cpu_clock_period 			-wavefo
 
 ##### 时钟约束设置 - 使用参数 ###########################################################
 
-# Uncertainty设置 (period的30%)
-set_clock_uncertainty [expr $PAD_cpu_clock_period * 0.3]        [get_clocks clock]
+# Use independent setup and hold uncertainty budgets.
+set_clock_uncertainty -setup [expr $PAD_cpu_clock_period * 0.3] [get_clocks clock]
+set_clock_uncertainty -hold  0 [get_clocks clock]
 
 # Transition设置 (period的10%)
 
@@ -82,6 +83,9 @@ set_ideal_network [get_ports clock]
 
 # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/allClocks_uncore_clkmux/ClockOr2/clockOut}]
 # # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/auto_clock_out_member_allClocks_uncore_clock}]
+# Restrict sequential optimization/retiming to the double-precision FMA pipe.
+set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f64]
+set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f32]
 # set_optimize_registers [get_designs FPU] true
 # set_optimize_registers [get_designs BranchPredictor] true
 # set_optimize_registers [get_designs PipelinedMulUnit] true

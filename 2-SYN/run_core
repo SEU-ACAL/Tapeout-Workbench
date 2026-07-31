@@ -10,7 +10,8 @@ Options:
   --top <module>            Set TOP_MODULE for the synthesis Tcl flow.
   --sram-wrapper <file>     Optionally set SRAM_WRAPPER_FILE.
   --tech <name>             Select technology configuration (default: tsmc28).
-  --clock-period <ns>       Set the primary clock period in nanoseconds (default: 1.0).
+  --clock-period <ns>       Set the primary clock period in nanoseconds (default: 10.0).
+  --run-id <name>           Write outputs and reports to the specified run directory.
   -h, --help                Show this help message.
 EOF
 }
@@ -70,6 +71,11 @@ while [ "$#" -gt 0 ]; do
             CLOCK_PERIOD=$2
             shift 2
             ;;
+        --run-id)
+            require_value "$@"
+            RUN_ID=$2
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -82,7 +88,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CLOCK_PERIOD; do
+for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CLOCK_PERIOD RUN_ID; do
     eval "value=\${$variable-}"
     if [ -n "$value" ]; then
         escaped_value=$(tcl_escape "$value")
@@ -90,10 +96,9 @@ for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_
     fi
 done
 
+log_date=${RUN_ID:-$(date +%m%d_%H%M)}
+mkdir -p outputs/$log_date
+mkdir -p rpt/$log_date
 rm -f ./alib-52/*
 rm -f ./elab/*
-log_date=$(date +%m%d)_$(date +%H%M)
-mkdir outputs/$log_date
-mkdir rpt/$log_date
-#/usr/eda/synopsys/syn_J201409SP3/bin/dc_shell-t -f ./scripts/core.tcl -x "set data ${log_date}" | tee ./log/core_${log_date}.log
 dc_shell -f ./scripts/core.tcl -x "set data {$log_date}$dc_command" | tee ./log/core_${log_date}.log

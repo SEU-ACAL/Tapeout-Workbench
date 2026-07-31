@@ -91,6 +91,13 @@ source -e -v ./scripts/operation_conditions.tcl
 
 compile_ultra -area_high_effort_script -no_autoungroup  -no_boundary_optimization  
 ##compile_ultra -timing_high_effort_script -no_autoungroup  -no_boundary_optimization -incremental
+
+# Retiming is restricted to designs marked with set_optimize_registers.  Keep
+# the eligibility diagnostics with this run so blocked registers are visible.
+redirect ./rpt/$data/FPUFMAPipe_l4_f64_retiming.rpt {
+    optimize_registers -only_attributed_designs -check_design
+}
+
 set_fix_multiple_port_nets -all -buffer_constants
 set_fix_multiple_port_nets -all -buffer_constants [all_designs]
 
@@ -109,6 +116,10 @@ change_names -hier -rules verilog
 write_sdc                                ./outputs/$data/${TOP_MODULE}.sdc
 write -format ddc     -hierarchy -output ./outputs/$data/${TOP_MODULE}.ddc
 write -format verilog -hierarchy -output ./outputs/$data/${TOP_MODULE}.v
+# DC R-2020.09 supports SDF 1.0/2.1 only.  Use its native writer so this SDF
+# matches the synthesized timing graph and libraries.
+write_sdf -version 2.1 -significant_digits 3 \
+    ./outputs/$data/${TOP_MODULE}.sdf
 #save_upf                                 ./outputs/$data/${TOP_MODULE}.upf
 
 #save_upf                                               ./outputs/$data/${TOP_MODULE}.upf
