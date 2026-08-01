@@ -58,6 +58,11 @@ if ! grep -Fxq "${BUILD_DIR}/gen-collateral/TestHarness.sv" "${HARNESS_FILELIST}
 fi
 
 : > "${SRAM_FILELIST}"
+if command -v rg >/dev/null 2>&1; then
+  sram_names_command=(rg -o 'chipyard_sram_[[:alnum:]_]+')
+else
+  sram_names_command=(grep -Eo 'chipyard_sram_[[:alnum:]_]+')
+fi
 while IFS= read -r macro_name; do
   macro_model_relative="${SRAM_MODEL_TEMPLATE/\%s/${macro_name}}"
   macro_model_relative="${macro_model_relative/\%s/${SRAM_CORNER}}"
@@ -68,7 +73,7 @@ while IFS= read -r macro_name; do
   macro_model="${SRAM_ROOT}/${macro_name}/${macro_model_relative}"
   [[ -f "${macro_model}" ]] || { echo "Missing SRAM Verilog model: ${macro_model}" >&2; exit 2; }
   printf '%s\n' "${macro_model}" >> "${SRAM_FILELIST}"
-done < <(rg -o 'chipyard_sram_[[:alnum:]_]+' "${NETLIST}" | sort -u)
+done < <("${sram_names_command[@]}" "${NETLIST}" | sort -u)
 
 {
   cat "${HARNESS_FILELIST}"

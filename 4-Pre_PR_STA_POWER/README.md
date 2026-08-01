@@ -1,6 +1,6 @@
 # ChipTop STA And Power
 
-This directory exports an SDF from the synthesized ChipTop netlist and reports
+This directory verifies the SDF exported by DC from the synthesized ChipTop netlist and reports
 averaged power from a zero-delay gate-level simulation waveform.
 
 Run the commands from the `ic_workbench` root. The zero-delay waveform must be
@@ -8,10 +8,11 @@ generated first with `WAVEFORM=1` in `3-Pre_PR_NETSIM`.
 
 ## Environment
 
-Select the technology directly. `tsmc28` remains the default:
+Select the technology directly. `smic180` is the default for the latest
+`0731_0611` netlist package:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER power TECH=tsmc28 NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=0731_0611
 make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run>
 ```
 
@@ -28,58 +29,62 @@ make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run> \
   SRAM_CORNER=<corner> SRAM_DB_TEMPLATE='%s_%s.db'
 ```
 
-`PT_SHELL` defaults to `pt_shell`. Use PrimePower W-2024 or later: the
-zero-delay waveform is FSDB 6.1, and W-2024 reads it natively. Set the shell
-explicitly when it is not already in `PATH`:
+`PT_SHELL` defaults to `pt_shell`. Use a PrimeTime PX/PrimePower version that
+reads FSDB natively. Set the shell explicitly when it is not already in `PATH`:
 
 ```sh
 export PT_SHELL=/path/to/pt_shell
 ```
 
-## Zero-Delay Power
+## SDF Simulation Power
 
-Build and run the no-SDF gate-level simulation with waveform enabled. See
-`3-Pre_PR_NETSIM/README.md` for its required tape-env and model variables.
+The default flow uses the DC-generated SDF at `2-SYN/outputs/0731_0611/ChipTop.sdf`,
+runs an SDF-annotated gate-level simulation, and reads that FSDB directly for
+averaged power. It does not create or consume VCD, VPD, or SAIF files.
 
 ```sh
-make -C 3-Pre_PR_NETSIM gls_zero NETLIST_RUN=0720_1845 WAVEFORM=1
-make -C 3-Pre_PR_NETSIM run_zero NETLIST_RUN=0720_1845 WAVEFORM=1 \
+make -C 4-Pre_PR_STA_POWER sdf_power TECH=smic180 \
   BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
 ```
 
-Run averaged power analysis:
+Run the two stages explicitly when needed:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER power TECH=tsmc28 NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER sdf TECH=smic180 NETLIST_RUN=0731_0611
+make -C 3-Pre_PR_NETSIM gls_sdf TECH=smic180 NETLIST_RUN=0731_0611 WAVEFORM=1
+make -C 3-Pre_PR_NETSIM run_sdf TECH=smic180 NETLIST_RUN=0731_0611 WAVEFORM=1 \
+  BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
+make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=0731_0611
 ```
 
-The target reads `run-zero.fsdb` directly. It analyzes activity after `1000 ns`,
-excluding reset startup. Override the activity window or waveform path when
-needed:
+The target reads `run-sdf.fsdb` directly and preserves SDF event timing. It
+analyzes activity after `1000 ns`, excluding reset startup. Override the
+activity window or waveform path when needed:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0720_1845 \
-  FSDB=/path/to/run-zero.fsdb POWER_START_NS=2000
+make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0731_0611 \
+  FSDB=/path/to/run-sdf.fsdb POWER_START_NS=2000
 ```
 
-Reports are written under `outputs/<technology>/<netlist-run>/zero-fsdb/`:
+Reports are written under `outputs/<technology>/<netlist-run>/sdf-fsdb/`:
 
 - `power_total.rpt`: total internal, switching, leakage, and total power
 - `power_hierarchy.rpt`: hierarchy breakdown
 - `power_verbose.rpt`: detailed power report
 - `check_power.rpt`: library table and model coverage checks
 
-This is a pre-layout averaged-power estimate. It does not use SDF or extracted
-parasitics, so it is suitable for workload comparison but not signoff.
+This is an SDF-based, pre-layout averaged-power estimate. It is suitable for
+workload comparison but is not extracted-parasitic signoff.
 
 ## SDF Export
 
 Export MAXIMUM timing checks and delays for the matching synthesized netlist:
 
 ```sh
-make -C 4-Pre_PR_STA_POWER sdf TECH=tsmc28 NETLIST_RUN=0720_1845
+make -C 4-Pre_PR_STA_POWER sdf TECH=smic180 NETLIST_RUN=0731_0611
 ```
 
-The default SDF output is
+The default SDF output is `../2-SYN/outputs/<netlist-run>/ChipTop.sdf`; it is
+written by DC during synthesis. Override
 `3-Pre_PR_NETSIM/inputs/<netlist-run>/ChipTop.sdf`. Override `NETLIST`, `SDC`,
 `SDF_OUT`, or `TOP` for another synthesis run.

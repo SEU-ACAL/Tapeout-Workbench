@@ -10,6 +10,7 @@ set sdc_file [require_env SDC]
 set fsdb_file [require_env FSDB]
 set activity_strip_path [require_env ACTIVITY_STRIP_PATH]
 set power_start_ns [require_env POWER_START_NS]
+set power_end_ns [require_env POWER_END_NS]
 set power_out_dir [require_env POWER_OUT_DIR]
 set stdcell_db [require_env STDCELL_DB]
 set sram_root [require_env SRAM_ROOT]
@@ -30,8 +31,8 @@ puts "Power technology: $technology, standard-cell corner: $technology_corner, S
 file mkdir $power_out_dir
 redirect "$power_out_dir/check_timing.rpt" { check_timing -verbose }
 
-read_fsdb -zero_delay -strip_path $activity_strip_path \
-    -time [list $power_start_ns -1] $fsdb_file
+read_fsdb -strip_path $activity_strip_path \
+    -time [list $power_start_ns $power_end_ns] $fsdb_file
 update_power
 
 redirect "$power_out_dir/check_power.rpt" { check_power }

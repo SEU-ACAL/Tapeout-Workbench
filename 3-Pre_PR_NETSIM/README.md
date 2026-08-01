@@ -12,13 +12,13 @@ export TAPE_ENV=/path/to/tape-env
 ```
 
 ```sh
-make -C 3-Pre_PR_NETSIM gls_zero TECH=tsmc28 NETLIST_RUN=0720_1845
-make -C 3-Pre_PR_NETSIM run_zero TECH=tsmc28 NETLIST_RUN=0720_1845 \
+make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 NETLIST_RUN=0731_0611
+make -C 3-Pre_PR_NETSIM run_zero TECH=smic180 NETLIST_RUN=0731_0611 \
   BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
 ```
 
 `TECH` selects the standard-cell and SRAM Verilog models. Supported values are
-`tsmc28` (the default) and `smic180`. The SMIC180 flow uses the SCC018UG UHD
+`smic180` (the default for `0731_0611`) and `tsmc28`. The SMIC180 flow uses the SCC018UG UHD
 RVT model and the SMIC SRAM models at the `ss_1.62_125` corner:
 
 ```sh
@@ -46,11 +46,11 @@ default timeout of 10,000,000 cycles.
 For timing simulation, provide the matching SDF:
 
 ```sh
-make -C 3-Pre_PR_NETSIM gls_sdf TECH=tsmc28 NETLIST_RUN=0720_1845 SDF=/path/to/ChipTop.sdf
-make -C 3-Pre_PR_NETSIM run_sdf TECH=tsmc28 NETLIST_RUN=0720_1845 SDF=/path/to/ChipTop.sdf \
+make -C 3-Pre_PR_NETSIM gls_sdf TECH=smic180 NETLIST_RUN=0731_0611 WAVEFORM=1
+make -C 3-Pre_PR_NETSIM run_sdf TECH=smic180 NETLIST_RUN=0731_0611 WAVEFORM=1 \
   BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
 ```
 
-Add `WAVEFORM=1` to both the build and run command to produce an FSDB under
-`gen/<config>/<netlist-run>/`. The waveform build is separate from the default
-build, so FSDB debug options are never enabled implicitly.
+`WAVEFORM=1` produces only an FSDB under `gen/<config>/<netlist-run>/`; do not
+pass `+vcdfile` or `+vcdplusfile`. The waveform build is separate from the
+default build, so FSDB debug options are never enabled implicitly.

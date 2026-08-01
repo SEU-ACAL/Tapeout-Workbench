@@ -1,54 +1,46 @@
 SHELL := /bin/bash
 
-TECH ?= tsmc28
+TECH ?= smic180
 TECH_CONFIG := scripts/tech/$(TECH).mk
 ifeq ($(wildcard $(TECH_CONFIG)),)
 $(error Unknown TECH '$(TECH)'; expected a configuration under scripts/tech)
 endif
 include $(TECH_CONFIG)
 
-NETLIST_RUN ?= 0720_1845
+NETLIST_RUN ?= 0731_0611
 TOP ?= ChipTop
 NETLIST ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/$(TOP).v
 SDC ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/$(TOP).sdc
-SDF_OUT ?= $(CURDIR)/../3-Pre_PR_NETSIM/inputs/$(NETLIST_RUN)/$(TOP).sdf
-FSDB ?= $(CURDIR)/../3-Pre_PR_NETSIM/gen/chipyard.harness.TestHarness.TapeoutConfig/$(NETLIST_RUN)/run-zero.fsdb
-POWER_OUT_DIR ?= $(CURDIR)/outputs/$(TECH)/$(NETLIST_RUN)/zero-fsdb
+SDF_OUT ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/$(TOP).sdf
+CONFIG ?= chipyard.harness.TestHarness.TapeoutConfig
+FSDB ?= $(CURDIR)/../3-Pre_PR_NETSIM/gen/$(CONFIG)/$(NETLIST_RUN)/run-sdf.fsdb
+POWER_OUT_DIR ?= $(CURDIR)/outputs/$(TECH)/$(NETLIST_RUN)/sdf-fsdb
 ACTIVITY_STRIP_PATH ?= TestDriver/testHarness/chiptop0
 POWER_START_NS ?= 1000
+POWER_END_NS ?= -1
 STD_CELL_DB ?= $(TECH_STD_CELL_DB)
 SRAM_ROOT ?= $(TECH_SRAM_ROOT)
 SRAM_CORNER ?= $(TECH_SRAM_CORNER)
 SRAM_DB_TEMPLATE ?= $(TECH_SRAM_DB_TEMPLATE)
 PT_SHELL ?= pt_shell
 
-.PHONY: help check-config sdf power clean-sdf
+.PHONY: help check-config sdf power sdf_power
 
 help:
 	@printf '%s\n' \
-	  'make sdf [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Export ChipTop MAXIMUM SDF for GLS.' \
-	  'make power [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Report averaged power directly from a zero-delay FSDB.' \
-	  'TECH defaults to tsmc28; STD_CELL_DB, SRAM_ROOT, SRAM_CORNER, and SRAM_DB_TEMPLATE remain overridable.' \
-	  'Override NETLIST, SDC, SDF_OUT, FSDB, TOP, PT_SHELL, or POWER_START_NS as needed.'
+	  'make sdf [TECH=smic180|tsmc28] [NETLIST_RUN=<run>]  Verify DC-generated ChipTop.sdf for GLS.' \
+	  'make sdf_power BINARY=<elf> [TECH=smic180|tsmc28] [NETLIST_RUN=<run>]  Run SDF GLS with FSDB, then report power.' \
+	  'make power [TECH=smic180|tsmc28] [NETLIST_RUN=<run>]  Report averaged power directly from the SDF FSDB.' \
+	  'TECH defaults to smic180 for the latest netlist; STD_CELL_DB, SRAM_ROOT, SRAM_CORNER, and SRAM_DB_TEMPLATE remain overridable.' \
+	  'sdf_power requires TAPE_ENV and RISCV from the Chipyard Nix shell. It emits only run-sdf.fsdb as waveform output.' \
+	  'Generate SDF with: (cd ../2-SYN && ./run_core --run-id <run> ...). Override NETLIST, SDC, SDF_OUT, FSDB, TOP, CONFIG, PT_SHELL, POWER_START_NS, or POWER_END_NS as needed.'
 
 check-config:
 	@test -n '$(STD_CELL_DB)' || { echo 'STD_CELL_DB is unset; provide the standard-cell power .db path'; exit 2; }
 	@test -n '$(SRAM_ROOT)' || { echo 'SRAM_ROOT is unset; provide the SRAM library root path'; exit 2; }
 
-sdf: check-config $(NETLIST) $(SDC) scripts/pt_chiptop_sdf.tcl scripts/chiptop_common.tcl
-	@mkdir -p $(dir $(SDF_OUT))
-	@NETLIST='$(abspath $(NETLIST))' \
-	 SDC='$(abspath $(SDC))' \
-	 SDF_OUT='$(abspath $(SDF_OUT))' \
-	 STDCELL_DB='$(abspath $(STD_CELL_DB))' \
-	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
-	 SRAM_CORNER='$(SRAM_CORNER)' \
-	 SRAM_DB_TEMPLATE='$(SRAM_DB_TEMPLATE)' \
-	 TECH='$(TECH)' \
-	 TECH_CORNER='$(TECH_CORNER)' \
-	 TOP='$(TOP)' \
-	 $(PT_SHELL) -f scripts/pt_chiptop_sdf.tcl | tee $(dir $(SDF_OUT))/pt-sdf.log
-	@grep -q 'Wrote SDF:' $(dir $(SDF_OUT))/pt-sdf.log
+sdf: $(SDF_OUT)
+	@test -s $(SDF_OUT) || { echo 'Missing DC-generated SDF: $(SDF_OUT)' >&2; exit 2; }
 
 power: check-config $(FSDB) scripts/pt_chiptop_power.tcl scripts/chiptop_common.tcl
 	@mkdir -p $(POWER_OUT_DIR)
@@ -58,6 +50,7 @@ power: check-config $(FSDB) scripts/pt_chiptop_power.tcl scripts/chiptop_common.
 	 FSDB='$(abspath $(FSDB))' \
 	 ACTIVITY_STRIP_PATH='$(ACTIVITY_STRIP_PATH)' \
 	 POWER_START_NS='$(POWER_START_NS)' \
+	 POWER_END_NS='$(POWER_END_NS)' \
 	 POWER_OUT_DIR='$(abspath $(POWER_OUT_DIR))' \
 	 STDCELL_DB='$(abspath $(STD_CELL_DB))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
@@ -68,5 +61,13 @@ power: check-config $(FSDB) scripts/pt_chiptop_power.tcl scripts/chiptop_common.
 	 $(PT_SHELL) -file scripts/pt_chiptop_power.tcl -output_log_file $(POWER_OUT_DIR)/power.log
 	@grep -q 'Wrote power reports to' $(POWER_OUT_DIR)/power.log
 
-clean-sdf:
-	rm -f $(SDF_OUT) $(dir $(SDF_OUT))/pt-sdf.log
+sdf_power: check-config
+	@test -n '$(BINARY)' || { echo 'Set BINARY=<ELF>'; exit 2; }
+	$(MAKE) sdf
+	$(MAKE) -C ../3-Pre_PR_NETSIM gls_sdf \
+		TECH='$(TECH)' NETLIST_RUN='$(NETLIST_RUN)' TOP='$(TOP)' CONFIG='$(CONFIG)' \
+		SDF='$(SDF_OUT)' WAVEFORM=1
+	$(MAKE) -C ../3-Pre_PR_NETSIM run_sdf \
+		TECH='$(TECH)' NETLIST_RUN='$(NETLIST_RUN)' TOP='$(TOP)' CONFIG='$(CONFIG)' \
+		SDF='$(SDF_OUT)' WAVEFORM=1 BINARY='$(BINARY)'
+	$(MAKE) power FSDB='$(FSDB)' POWER_OUT_DIR='$(POWER_OUT_DIR)'

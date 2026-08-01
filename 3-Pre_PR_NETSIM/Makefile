@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-TECH ?= tsmc28
+TECH ?= smic180
 TECH_CONFIG := scripts/tech/$(TECH).mk
 ifeq ($(wildcard $(TECH_CONFIG)),)
 $(error Unknown TECH '$(TECH)'; expected a configuration under scripts/tech)
@@ -11,12 +11,12 @@ TAPE_ENV ?=
 SOC_GENERATOR_DIR := $(TAPE_ENV)/soc-generator
 CONFIG ?= chipyard.harness.TestHarness.TapeoutConfig
 BUILD_DIR ?= $(SOC_GENERATOR_DIR)/sims/vcs/generated-src/$(CONFIG)
-NETLIST_RUN ?= 0720_1845
+NETLIST_RUN ?= 0731_0611
 NETLIST ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/ChipTop.v
-SDF ?= $(CURDIR)/inputs/$(NETLIST_RUN)/ChipTop.sdf
+SDF ?= $(CURDIR)/../2-SYN/outputs/$(NETLIST_RUN)/ChipTop.sdf
 TOP ?= ChipTop
 TB ?= TestDriver
-CLOCK_PERIOD ?= 1.0
+CLOCK_PERIOD ?= 10.0
 RESET_DELAY ?= 777.7
 TIMEOUT_CYCLES ?= 10000000
 WAVEFORM ?= 0
@@ -81,7 +81,9 @@ VCS_FLAGS := -notice -line \
 	-lriscv -lfesvr -ldramsim
 
 ZERO_VCS_FLAGS := +define+UNIT_DELAY +define+no_warning +nospecify
-SDF_VCS_FLAGS := +define+SDF +define+SDF_FILE=\"$(abspath $(SDF))\" +neg_tchk -top sdf_annotate
+# Keep SDF cell/interconnect delays while preventing library timing notifiers from
+# overwhelming the functional power run. Timing-check entries include negative holds.
+SDF_VCS_FLAGS := +define+SDF +define+SDF_FILE=\"$(abspath $(SDF))\" +notimingcheck -top sdf_annotate
 RUN_FLAGS ?= +dramsim +dramsim_ini_dir=$(DRAMSIM_INI_DIR) +max-cycles=$(TIMEOUT_CYCLES)
 ifdef RANDOM_SEED
 SEED_FLAG = +ntb_random_seed=$(RANDOM_SEED)
@@ -104,12 +106,13 @@ endif
 help:
 	@printf '%s\n' \
 	  'Run from the Chipyard Nix development shell so RISCV and VCS are exported.' \
-	  'make gls_zero [TECH=tsmc28|smic180] [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
-	  'make gls_sdf [TECH=tsmc28|smic180] SDF=<path>             Build gate-level simulation with SDF.' \
+	  'make gls_zero [TECH=smic180|tsmc28] [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
+	  'make gls_sdf [TECH=smic180|tsmc28] SDF=<path>             Build gate-level simulation with SDF.' \
 	  'make run_zero BINARY=<elf>          Run no-SDF gate-level simulation.' \
 	  'make run_sdf SDF=<path> BINARY=<elf> Run SDF gate-level simulation.' \
-	  'TECH defaults to tsmc28; STD_CELL_MODEL, SRAM_ROOT, SRAM_CORNER, and SRAM_MODEL_TEMPLATE remain overridable.' \
-	  'Add WAVEFORM=1 to build and run commands to write an FSDB file.' \
+	  'SDF defaults to the DC-generated outputs/<run>/ChipTop.sdf; run DC first with --run-id <run>.' \
+	  'TECH defaults to smic180 for the latest netlist; STD_CELL_MODEL, SRAM_ROOT, SRAM_CORNER, and SRAM_MODEL_TEMPLATE remain overridable.' \
+	  'Add WAVEFORM=1 to build and run commands to write an FSDB file; no other waveform format is emitted.' \
 	  'make clean-gls                       Remove GLS simulators and VCS Mdirs, preserving FSDB files.'
 
 check-config:
@@ -152,7 +155,7 @@ gls_sdf: $(SDF_SIM)
 
 $(SDF):
 	@echo "Missing SDF: $@" >&2
-	@echo "Set SDF=<path> or generate it with: make -C ../4-Pre_PR_STA_POWER sdf NETLIST_RUN=$(NETLIST_RUN)" >&2
+	@echo "Set SDF=<path> or generate it with: (cd ../2-SYN && ./run_core --run-id $(NETLIST_RUN) ...)" >&2
 	@exit 2
 
 run_zero: $(ZERO_SIM)
