@@ -47,6 +47,7 @@ link
 
 ###
 source -e -v ./scripts/constraint_core.tcl
+source -e -v ./scripts/set_false_path.tcl
 
 # set my_net [get_nets -of_objects [get_pins {system/chipyard_prcictrl_domain/clockSelector/allClocks_uncore_clkmux/io_clockOut}]]
 # if { $my_net != "" } {
@@ -71,7 +72,6 @@ check_timing  > ./rpt/check_timing.rpt
 
 
 source -e -v ./scripts/set_dont_touch_cell.tcl
-source -e -v ./scripts/set_false_path.tcl
 source -e -v ./scripts/set_dont_use.tcl
 
 # Keep inferred synchronous reset logic adjacent to each register.  This
