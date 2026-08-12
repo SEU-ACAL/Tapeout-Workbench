@@ -148,6 +148,8 @@ proc write_compact_timing_report {output args} {
 report_constraint -all_vio > ./rpt/$data/constrant.rpt
 report_area   -hier        > ./rpt/$data/area.rpt
 report_constraint  -all_violators                         > ./rpt/$data/${TOP_MODULE}_constraint_all_violators.rpt
+# Fixed-location post-compile diagnostic for the mapped design.
+check_timing                                              > ./rpt/check_timing_post.rpt
 check_timing                                              > ./rpt/$data/${TOP_MODULE}_check_timing_final.rpt
 report_timing_requirements                                > ./rpt/$data/${TOP_MODULE}_report_timing_requirements.rpt
 write_compact_timing_report \
