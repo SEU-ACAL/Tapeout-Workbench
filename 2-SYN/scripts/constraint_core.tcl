@@ -22,7 +22,10 @@ set PAD_cpu_clock_period $CLOCK_PERIOD
 ##### Source Clock Definition ###########################################################
 
 set clk_ports		 [get_ports {clock}]
+# These are asynchronous control inputs, not clock-synchronous data inputs.
+set reset_ports     [get_ports {reset jtag_reset}]
 set data_inputs 	 [remove_from_collection [all_inputs]  $clk_ports]
+set data_inputs     [remove_from_collection $data_inputs $reset_ports]
 set data_outputs	 [remove_from_collection [all_outputs] $clk_ports]
 set timing_regs [all_registers]
 
