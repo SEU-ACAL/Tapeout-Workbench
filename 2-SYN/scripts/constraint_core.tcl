@@ -172,8 +172,8 @@ set_ideal_network $clk_ports
 # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/allClocks_uncore_clkmux/ClockOr2/clockOut}]
 # # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/auto_clock_out_member_allClocks_uncore_clock}]
 # Restrict sequential optimization/retiming to the double-precision FMA pipe.
-set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f64]
-set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f32]
+# set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f64]
+# set_optimize_registers true -designs [get_designs FPUFMAPipe_l4_f32]
 # set_optimize_registers [get_designs FPU] true
 # set_optimize_registers [get_designs BranchPredictor] true
 # set_optimize_registers [get_designs PipelinedMulUnit] true
