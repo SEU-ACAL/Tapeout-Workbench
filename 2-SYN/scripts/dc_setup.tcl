@@ -30,7 +30,7 @@ if {[info exists SRAM_WRAPPER_FILE] && $SRAM_WRAPPER_FILE ne ""} {
     set wrapper_contents [read $wrapper_handle]
     close $wrapper_handle
     if {![regexp "\\.${SRAM_WRITE_ENABLE_PORT}\\(" $wrapper_contents]} {
-        error "SRAM wrapper $SRAM_WRAPPER_FILE does not match technology $TECH_CONFIG; expected .$SRAM_WRITE_ENABLE_PORT(...) ports"
+        error "SRAM wrapper $SRAM_WRAPPER_FILE does not match technology $TECH_CONFIG; expected .${SRAM_WRITE_ENABLE_PORT}(...) ports"
     }
 }
 
