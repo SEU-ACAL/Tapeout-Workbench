@@ -106,7 +106,8 @@ set_output_delay  [expr $PAD_cpu_clock_period * 0.5]        -clock [get_clocks c
 
 # Interface delays are relative to their own source clocks, not the SoC clock.
 set_input_delay   [expr $PAD_cpu_jtag_clock_period * 0.5]   -clock [get_clocks jtag_tck] $jtag_input_ports
-set_output_delay  [expr $PAD_cpu_jtag_clock_period * 0.5]   -clock [get_clocks jtag_tck] $jtag_output_ports
+# TDO changes on the falling edge of TCK.  Do not impose a generic half-cycle
+# output budget; apply a board-specific constraint here when one is available.
 set_input_delay   [expr $PAD_cpu_serial_clock_period * 0.5] -clock [get_clocks serial_tl_clk] $serial_tl_input_ports
 set_output_delay  [expr $PAD_cpu_serial_clock_period * 0.5] -clock [get_clocks serial_tl_clk] $serial_tl_output_ports
 
