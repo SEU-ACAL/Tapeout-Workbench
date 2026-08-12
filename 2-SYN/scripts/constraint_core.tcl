@@ -15,21 +15,66 @@ if {![string is double -strict $CLOCK_PERIOD] || ![expr {$CLOCK_PERIOD > 0.0}]} 
 }
 set PAD_cpu_clock_period $CLOCK_PERIOD
 
-# set PAD_cpu_serial_clock_period     20
-# set PAD_cpu_jtag_clock_period       100
+if {![info exists JTAG_CLOCK_PERIOD]} {
+    set JTAG_CLOCK_PERIOD 100.0
+}
+if {![info exists SERIAL_TL_CLOCK_PERIOD]} {
+    set SERIAL_TL_CLOCK_PERIOD $CLOCK_PERIOD
+}
+foreach {clock_name clock_period} [list \
+    JTAG_CLOCK_PERIOD $JTAG_CLOCK_PERIOD \
+    SERIAL_TL_CLOCK_PERIOD $SERIAL_TL_CLOCK_PERIOD] {
+    if {![string is double -strict $clock_period] || ![expr {$clock_period > 0.0}]} {
+        error "$clock_name must be a positive number in nanoseconds, got '$clock_period'"
+    }
+}
+set PAD_cpu_jtag_clock_period $JTAG_CLOCK_PERIOD
+set PAD_cpu_serial_clock_period $SERIAL_TL_CLOCK_PERIOD
+
 # set clk_pll_cpu_period              5
 
 ##### Source Clock Definition ###########################################################
 
-set clk_ports		 [get_ports {clock}]
+set core_clk_port       [get_ports clock]
+set jtag_clk_port       [get_ports jtag_TCK]
+set serial_tl_clk_port  [get_ports serial_tl_0_clock_in]
+set clk_ports           [get_ports {clock jtag_TCK serial_tl_0_clock_in}]
 # These are asynchronous control inputs, not clock-synchronous data inputs.
 set reset_ports     [get_ports {reset jtag_reset}]
+set jtag_input_ports [get_ports {jtag_TMS jtag_TDI}]
+set jtag_output_ports [get_ports jtag_TDO]
+set serial_tl_input_ports [get_ports {
+    serial_tl_0_in_valid
+    serial_tl_0_in_bits_phit*
+    serial_tl_0_out_ready
+}]
+set serial_tl_output_ports [get_ports {
+    serial_tl_0_in_ready
+    serial_tl_0_out_valid
+    serial_tl_0_out_bits_phit*
+}]
 set data_inputs 	 [remove_from_collection [all_inputs]  $clk_ports]
 set data_inputs     [remove_from_collection $data_inputs $reset_ports]
+set data_inputs     [remove_from_collection $data_inputs $jtag_input_ports]
+set data_inputs     [remove_from_collection $data_inputs $serial_tl_input_ports]
 set data_outputs	 [remove_from_collection [all_outputs] $clk_ports]
+set data_outputs    [remove_from_collection $data_outputs $jtag_output_ports]
+set data_outputs    [remove_from_collection $data_outputs $serial_tl_output_ports]
 set timing_regs [all_registers]
 
-create_clock [get_ports clock] 									-period $PAD_cpu_clock_period 			-waveform [list 0 [expr $PAD_cpu_clock_period/2.0]] -name clock
+create_clock $core_clk_port -period $PAD_cpu_clock_period \
+    -waveform [list 0 [expr $PAD_cpu_clock_period / 2.0]] -name clock
+create_clock $jtag_clk_port -period $PAD_cpu_jtag_clock_period \
+    -waveform [list 0 [expr $PAD_cpu_jtag_clock_period / 2.0]] -name jtag_tck
+create_clock $serial_tl_clk_port -period $PAD_cpu_serial_clock_period \
+    -waveform [list 0 [expr $PAD_cpu_serial_clock_period / 2.0]] -name serial_tl_clk
+
+# The JTAG and Serial-TL clocks are independent of the SoC clock and of
+# each other. CDC structures in RTL handle transfers between these domains.
+set_clock_groups -asynchronous \
+    -group [get_clocks clock] \
+    -group [get_clocks jtag_tck] \
+    -group [get_clocks serial_tl_clk]
 
 
 
@@ -40,16 +85,28 @@ create_clock [get_ports clock] 									-period $PAD_cpu_clock_period 			-wavefo
 # Use independent setup and hold uncertainty budgets.
 set_clock_uncertainty -setup [expr $PAD_cpu_clock_period * 0.3] [get_clocks clock]
 set_clock_uncertainty -hold  0 [get_clocks clock]
+set_clock_uncertainty -setup [expr $PAD_cpu_jtag_clock_period * 0.3] [get_clocks jtag_tck]
+set_clock_uncertainty -hold  0 [get_clocks jtag_tck]
+set_clock_uncertainty -setup [expr $PAD_cpu_serial_clock_period * 0.3] [get_clocks serial_tl_clk]
+set_clock_uncertainty -hold  0 [get_clocks serial_tl_clk]
 
 # Transition设置 (period的10%)
 
 set_clock_transition  [expr $PAD_cpu_clock_period * 0.1]        [get_clocks clock]
+set_clock_transition  [expr $PAD_cpu_jtag_clock_period * 0.1]   [get_clocks jtag_tck]
+set_clock_transition  [expr $PAD_cpu_serial_clock_period * 0.1] [get_clocks serial_tl_clk]
 
 
 # Input/Output Delay设置 (period的50%)
 
 set_input_delay   [expr $PAD_cpu_clock_period * 0.5]        -clock [get_clocks clock] $data_inputs
 set_output_delay  [expr $PAD_cpu_clock_period * 0.5]        -clock [get_clocks clock] $data_outputs
+
+# Interface delays are relative to their own source clocks, not the SoC clock.
+set_input_delay   [expr $PAD_cpu_jtag_clock_period * 0.5]   -clock [get_clocks jtag_tck] $jtag_input_ports
+set_output_delay  [expr $PAD_cpu_jtag_clock_period * 0.5]   -clock [get_clocks jtag_tck] $jtag_output_ports
+set_input_delay   [expr $PAD_cpu_serial_clock_period * 0.5] -clock [get_clocks serial_tl_clk] $serial_tl_input_ports
+set_output_delay  [expr $PAD_cpu_serial_clock_period * 0.5] -clock [get_clocks serial_tl_clk] $serial_tl_output_ports
 
 
 
@@ -82,7 +139,7 @@ set_max_fanout          $MAX_FANOUT             $ALL_EX_OUT_IN
 
 # set_ideal_network  [all_clocks]
 #   [all_clocks]
-set_ideal_network [get_ports clock] 							
+set_ideal_network $clk_ports
 
 # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/allClocks_uncore_clkmux/ClockOr2/clockOut}]
 # # set_ideal_network [get_pins  {system/chipyard_prcictrl_domain/clockSelector/auto_clock_out_member_allClocks_uncore_clock}]
