@@ -156,7 +156,12 @@ write_compact_timing_report \
 report_area -physical -nosplit -hierarchy                 > ./rpt/$data/${TOP_MODULE}_mapped_area.rpt
 report_power -hierarchy                                   > ./rpt/$data/${TOP_MODULE}_power.rpt
 report_cell                                               > ./rpt/$data/${TOP_MODULE}_cell.rpt
-foreach path_group {I2R R2R R2O I2O} {
+set TIMING_PATH_GROUPS {
+    core_I2R core_R2R core_R2O core_I2O
+    jtag_I2R jtag_R2R jtag_R2O jtag_I2O
+    serial_I2R serial_R2R serial_R2O serial_I2O
+}
+foreach path_group $TIMING_PATH_GROUPS {
     write_compact_timing_report \
         ./rpt/$data/${TOP_MODULE}_${path_group}_setup.rpt \
         -group $path_group \
@@ -171,7 +176,7 @@ foreach path_group {I2R R2R R2O I2O} {
 
 report_qor -significant_digits 4 \
       > ./rpt/$data/${TOP_MODULE}_qor.rpt
-foreach path_group {I2R R2R R2O I2O} {
+foreach path_group $TIMING_PATH_GROUPS {
     report_logic_levels -group $path_group -max_paths 10000 -max_paths_to_report 500 -num_bins 20 -nosplit \
         > ./rpt/$data/${TOP_MODULE}_${path_group}_logic_levels.rpt
 }

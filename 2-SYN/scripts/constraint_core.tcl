@@ -60,14 +60,16 @@ set data_inputs     [remove_from_collection $data_inputs $serial_tl_input_ports]
 set data_outputs	 [remove_from_collection [all_outputs] $clk_ports]
 set data_outputs    [remove_from_collection $data_outputs $jtag_output_ports]
 set data_outputs    [remove_from_collection $data_outputs $serial_tl_output_ports]
-set timing_regs [all_registers]
-
 create_clock $core_clk_port -period $PAD_cpu_clock_period \
     -waveform [list 0 [expr $PAD_cpu_clock_period / 2.0]] -name clock
 create_clock $jtag_clk_port -period $PAD_cpu_jtag_clock_period \
     -waveform [list 0 [expr $PAD_cpu_jtag_clock_period / 2.0]] -name jtag_tck
 create_clock $serial_tl_clk_port -period $PAD_cpu_serial_clock_period \
     -waveform [list 0 [expr $PAD_cpu_serial_clock_period / 2.0]] -name serial_tl_clk
+
+set core_regs   [all_registers -clock [get_clocks clock]]
+set jtag_regs   [all_registers -clock [get_clocks jtag_tck]]
+set serial_regs [all_registers -clock [get_clocks serial_tl_clk]]
 
 # The JTAG and Serial-TL clocks are independent of the SoC clock and of
 # each other. CDC structures in RTL handle transfers between these domains.
@@ -111,25 +113,47 @@ set_output_delay  [expr $PAD_cpu_serial_clock_period * 0.5] -clock [get_clocks s
 
 
 
-# Input -> Register
-group_path -name I2R \
+# Keep timing reports separate for each clock domain.  The asynchronous clock
+# groups above remove inter-domain paths; these groups classify the remaining
+# intra-domain paths.
+group_path -name core_I2R \
     -from $data_inputs \
-    -to   $timing_regs
-
-# Register -> Register
-group_path -name R2R \
-    -from $timing_regs \
-    -to   $timing_regs
-
-# Register -> Output
-group_path -name R2O \
-    -from $timing_regs \
+    -to   $core_regs
+group_path -name core_R2R \
+    -from $core_regs \
+    -to   $core_regs
+group_path -name core_R2O \
+    -from $core_regs \
     -to   $data_outputs
-
-# Input -> Output
-group_path -name I2O \
+group_path -name core_I2O \
     -from $data_inputs \
     -to   $data_outputs
+
+group_path -name jtag_I2R \
+    -from $jtag_input_ports \
+    -to   $jtag_regs
+group_path -name jtag_R2R \
+    -from $jtag_regs \
+    -to   $jtag_regs
+group_path -name jtag_R2O \
+    -from $jtag_regs \
+    -to   $jtag_output_ports
+group_path -name jtag_I2O \
+    -from $jtag_input_ports \
+    -to   $jtag_output_ports
+
+group_path -name serial_I2R \
+    -from $serial_tl_input_ports \
+    -to   $serial_regs
+group_path -name serial_R2R \
+    -from $serial_regs \
+    -to   $serial_regs
+group_path -name serial_R2O \
+    -from $serial_regs \
+    -to   $serial_tl_output_ports
+group_path -name serial_I2O \
+    -from $serial_tl_input_ports \
+    -to   $serial_tl_output_ports
 
 set ALL_EX_OUT          [remove_from_collection [current_design] [all_outputs]]
 set ALL_EX_OUT_IN       [remove_from_collection $ALL_EX_OUT [all_inputs]]
