@@ -39,6 +39,12 @@ make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 \
 is replaced by the macro name and its optional second `%s` by `SRAM_CORNER`.
 For example, TSMC28 uses `VERILOG/%s_%s.v`, while SMIC180 uses `%s.v`.
 
+When the synthesized netlist contains an `S018VM_*` ROM macro, the GLS flow
+automatically appends `smic180_bootrom_sim.f`. Its behavioral models load the
+stable ROM code files under `/data2/smic180/rom-ip`. See the
+[DC synthesis README](../2-SYN/README.md) for preparing the corresponding
+timing libraries.
+
 `gls_zero` builds a no-SDF simulation without VCS register-initialization
 options. `run_zero` uses Chipyard's DRAMSim and ELF-loading arguments, with a
 default timeout of 10,000,000 cycles.
