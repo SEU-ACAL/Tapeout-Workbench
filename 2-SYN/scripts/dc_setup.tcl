@@ -58,13 +58,24 @@ set sram_link_library [list \
 # TSMC28 flow remains unchanged while alternative technologies can override it.
 source $tech_setup
 
+if {![info exists rom_link_library]} {
+    set rom_link_library [list]
+}
+
 foreach sram_db $sram_link_library {
     if {![file exists $sram_db]} {
         error "Missing SRAM timing library: $sram_db"
     }
 }
+foreach rom_db $rom_link_library {
+    if {![file exists $rom_db]} {
+        error "Missing ROM timing library: $rom_db"
+    }
+}
 
-set link_library      " * \
-                        $target_library \
-                        $sram_link_library \
-                        $synthetic_library"
+set link_library [concat [list *] \
+    $target_library \
+    $sram_link_library \
+    $rom_link_library \
+    $synthetic_library]
+puts "ROM timing libraries: $rom_link_library"

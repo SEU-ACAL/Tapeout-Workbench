@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(NETLIST BUILD_DIR TOP TEST_DRIVER SDF_ANNOTATE STD_CELL_MODEL SRAM_ROOT SRAM_CORNER SRAM_MODEL_TEMPLATE HARNESS_FILELIST SRAM_FILELIST GLS_FILELIST)
+required=(NETLIST BUILD_DIR TOP TEST_DRIVER SDF_ANNOTATE STD_CELL_MODEL SRAM_ROOT SRAM_CORNER SRAM_MODEL_TEMPLATE ROM_MODEL_FILELIST HARNESS_FILELIST SRAM_FILELIST ROM_FILELIST GLS_FILELIST)
 for variable_name in "${required[@]}"; do
   if [[ -z "${!variable_name:-}" ]]; then
     echo "Missing required environment variable: ${variable_name}" >&2
@@ -75,10 +75,33 @@ while IFS= read -r macro_name; do
   printf '%s\n' "${macro_model}" >> "${SRAM_FILELIST}"
 done < <("${sram_names_command[@]}" "${NETLIST}" | sort -u)
 
+: > "${ROM_FILELIST}"
+if command -v rg >/dev/null 2>&1; then
+  rom_macro_search=(rg -q 'S018VM_[[:alnum:]_$]+')
+else
+  rom_macro_search=(grep -Eq 'S018VM_[[:alnum:]_$]+')
+fi
+if "${rom_macro_search[@]}" "${NETLIST}"; then
+  [[ -f "${ROM_MODEL_FILELIST}" ]] || {
+    echo "Netlist contains an S018VM ROM macro but the ROM model filelist is missing: ${ROM_MODEL_FILELIST}" >&2
+    exit 2
+  }
+  while IFS= read -r rom_model || [[ -n "${rom_model}" ]]; do
+    [[ -z "${rom_model}" || "${rom_model}" == \#* ]] && continue
+    [[ -f "${rom_model}" ]] || { echo "Missing ROM Verilog model: ${rom_model}" >&2; exit 2; }
+    printf '%s\n' "${rom_model}" >> "${ROM_FILELIST}"
+  done < "${ROM_MODEL_FILELIST}"
+  [[ -s "${ROM_FILELIST}" ]] || {
+    echo "ROM model filelist is empty: ${ROM_MODEL_FILELIST}" >&2
+    exit 2
+  }
+fi
+
 {
   cat "${HARNESS_FILELIST}"
   printf '%s\n' "${TEST_DRIVER}" "${SDF_ANNOTATE}" "${NETLIST}" "${STD_CELL_MODEL}"
   cat "${SRAM_FILELIST}"
+  cat "${ROM_FILELIST}"
 } > "${GLS_FILELIST}"
 
 printf 'Generated GLS filelist: %s\n' "${GLS_FILELIST}"

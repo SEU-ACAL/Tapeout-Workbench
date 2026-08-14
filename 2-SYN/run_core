@@ -99,6 +99,7 @@ done
 log_date=${RUN_ID:-$(date +%m%d_%H%M)}
 mkdir -p outputs/$log_date
 mkdir -p rpt/$log_date
+mkdir -p log
 rm -f ./alib-52/*
 rm -f ./elab/*
 dc_shell -f ./scripts/core.tcl -x "set data {$log_date}$dc_command" | tee ./log/core_${log_date}.log

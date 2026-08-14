@@ -25,10 +25,14 @@ STD_CELL_MODEL ?= $(TECH_STD_CELL_MODEL)
 SRAM_ROOT ?= $(TECH_SRAM_ROOT)
 SRAM_CORNER ?= $(TECH_SRAM_CORNER)
 SRAM_MODEL_TEMPLATE ?= $(TECH_SRAM_MODEL_TEMPLATE)
+# The generated file lists the behavioral models for the SMIC ROM hard macros.
+# It is consumed only when the synthesized netlist contains an S018VM macro.
+ROM_MODEL_FILELIST ?= $(BUILD_DIR)/smic180_bootrom_sim.f
 
 GEN_DIR := $(CURDIR)/gen/$(CONFIG)/$(NETLIST_RUN)
 HARNESS_FILELIST := $(GEN_DIR)/harness.f
 SRAM_FILELIST := $(GEN_DIR)/sram.f
+ROM_FILELIST := $(GEN_DIR)/rom.f
 GLS_FILELIST := $(GEN_DIR)/gls.f
 TEST_DRIVER := $(SOC_GENERATOR_DIR)/generator/rocket-chip/src/main/resources/vsrc/TestDriver.v
 SDF_ANNOTATE := $(CURDIR)/tb/sdf_annotate.sv
@@ -133,8 +137,10 @@ $(GLS_FILELIST): $(PREPARE_FILELIST) $(NETLIST) $(TEST_DRIVER) $(SDF_ANNOTATE)
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
 	 SRAM_MODEL_TEMPLATE='$(SRAM_MODEL_TEMPLATE)' \
+	 ROM_MODEL_FILELIST='$(abspath $(ROM_MODEL_FILELIST))' \
 	 HARNESS_FILELIST='$(abspath $(HARNESS_FILELIST))' \
 	 SRAM_FILELIST='$(abspath $(SRAM_FILELIST))' \
+	 ROM_FILELIST='$(abspath $(ROM_FILELIST))' \
 	 GLS_FILELIST='$(abspath $(GLS_FILELIST))' \
 	 '$(PREPARE_FILELIST)'
 
