@@ -22,6 +22,7 @@ TIMEOUT_CYCLES ?= 10000000
 WAVEFORM ?= 0
 
 STD_CELL_MODEL ?= $(TECH_STD_CELL_MODEL)
+IO_CELL_MODEL ?= $(TECH_IO_CELL_MODEL)
 SRAM_ROOT ?= $(TECH_SRAM_ROOT)
 SRAM_CORNER ?= $(TECH_SRAM_CORNER)
 SRAM_MODEL_TEMPLATE ?= $(TECH_SRAM_MODEL_TEMPLATE)
@@ -79,6 +80,9 @@ VCS_FLAGS := -notice -line \
 	-CFLAGS "-O3 -std=c++17 -I$(RISCV)/include -I$(DRAMSIM_DIR) -I$(BUILD_DIR)/gen-collateral" \
 	-LDFLAGS "-L$(RISCV)/lib -Wl,-rpath,$(RISCV)/lib -L$(SOC_GENERATOR_DIR)/sims/vcs -L$(DRAMSIM_DIR) -no-pie" \
 	-lriscv -lfesvr -ldramsim
+VCS_EXTRA_SOURCES ?=
+VCS_EXTRA_TOPS ?=
+VCS_EXTRA_FLAGS ?=
 
 ZERO_VCS_FLAGS := +define+UNIT_DELAY +define+no_warning +nospecify
 # Keep SDF cell/interconnect delays while preventing library timing notifiers from
@@ -130,6 +134,7 @@ $(GLS_FILELIST): $(PREPARE_FILELIST) $(NETLIST) $(TEST_DRIVER) $(SDF_ANNOTATE)
 	 TEST_DRIVER='$(abspath $(TEST_DRIVER))' \
 	 SDF_ANNOTATE='$(abspath $(SDF_ANNOTATE))' \
 	 STD_CELL_MODEL='$(abspath $(STD_CELL_MODEL))' \
+	 IO_CELL_MODEL='$(abspath $(IO_CELL_MODEL))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
 	 SRAM_MODEL_TEMPLATE='$(SRAM_MODEL_TEMPLATE)' \
@@ -142,13 +147,13 @@ $(ZERO_SIM): check-config $(GLS_FILELIST) Makefile
 	@test -n '$(RISCV)' || { echo 'RISCV is unset; enter the Chipyard Nix development shell first'; exit 2; }
 	# Match Chipyard: never reuse a VCS Mdir across compile invocations.
 	@rm -rf $(GEN_DIR)/$(ZERO_MDIR)
-	$(VCS) $(VCS_FLAGS) $(ZERO_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(ZERO_MDIR) -l $@.compile.log
+	$(VCS) $(VCS_FLAGS) $(VCS_EXTRA_SOURCES) $(VCS_EXTRA_TOPS) $(VCS_EXTRA_FLAGS) $(ZERO_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(ZERO_MDIR) -l $@.compile.log
 
 $(SDF_SIM): check-config $(GLS_FILELIST) $(SDF) Makefile
 	@test -n '$(RISCV)' || { echo 'RISCV is unset; enter the Chipyard Nix development shell first'; exit 2; }
 	# Match Chipyard: never reuse a VCS Mdir across compile invocations.
 	@rm -rf $(GEN_DIR)/$(SDF_MDIR)
-	$(VCS) $(VCS_FLAGS) $(SDF_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(SDF_MDIR) -l $@.compile.log
+	$(VCS) $(VCS_FLAGS) $(VCS_EXTRA_SOURCES) $(VCS_EXTRA_TOPS) $(VCS_EXTRA_FLAGS) $(SDF_VCS_FLAGS) $(WAVEFORM_VCS_FLAGS) -o $@ -Mdir=$(GEN_DIR)/$(SDF_MDIR) -l $@.compile.log
 
 gls_zero: $(ZERO_SIM)
 gls_sdf: $(SDF_SIM)

@@ -19,6 +19,7 @@ ACTIVITY_STRIP_PATH ?= TestDriver/testHarness/chiptop0
 POWER_START_NS ?= 1000
 POWER_END_NS ?= -1
 STD_CELL_DB ?= $(TECH_STD_CELL_DB)
+IO_DB ?= $(TECH_IO_DB)
 SRAM_ROOT ?= $(TECH_SRAM_ROOT)
 SRAM_CORNER ?= $(TECH_SRAM_CORNER)
 SRAM_DB_TEMPLATE ?= $(TECH_SRAM_DB_TEMPLATE)
@@ -53,6 +54,7 @@ power: check-config $(FSDB) scripts/pt_chiptop_power.tcl scripts/chiptop_common.
 	 POWER_END_NS='$(POWER_END_NS)' \
 	 POWER_OUT_DIR='$(abspath $(POWER_OUT_DIR))' \
 	 STDCELL_DB='$(abspath $(STD_CELL_DB))' \
+	 IO_DB='$(abspath $(IO_DB))' \
 	 SRAM_ROOT='$(abspath $(SRAM_ROOT))' \
 	 SRAM_CORNER='$(SRAM_CORNER)' \
 	 SRAM_DB_TEMPLATE='$(SRAM_DB_TEMPLATE)' \

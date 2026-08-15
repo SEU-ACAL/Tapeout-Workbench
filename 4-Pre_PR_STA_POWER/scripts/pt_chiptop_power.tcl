@@ -13,6 +13,10 @@ set power_start_ns [require_env POWER_START_NS]
 set power_end_ns [require_env POWER_END_NS]
 set power_out_dir [require_env POWER_OUT_DIR]
 set stdcell_db [require_env STDCELL_DB]
+set io_db ""
+if {[info exists ::env(IO_DB)]} {
+    set io_db $::env(IO_DB)
+}
 set sram_root [require_env SRAM_ROOT]
 set sram_corner [require_env SRAM_CORNER]
 set sram_db_template [require_env SRAM_DB_TEMPLATE]
@@ -20,10 +24,14 @@ set technology [require_env TECH]
 set technology_corner [require_env TECH_CORNER]
 
 set sram_link_library [chiptop_sram_link_library $sram_root $sram_corner $sram_db_template]
-require_files "power analysis" [concat [list $netlist $sdc_file $fsdb_file $stdcell_db] $sram_link_library]
+set power_link_library [concat [list $stdcell_db] $sram_link_library]
+if {$io_db ne ""} {
+    lappend power_link_library $io_db
+}
+require_files "power analysis" [concat [list $netlist $sdc_file $fsdb_file] $power_link_library]
 
 set target_library $stdcell_db
-set link_library [concat * $stdcell_db $sram_link_library]
+set link_library [concat * $power_link_library]
 
 load_chiptop_design $top_design $netlist $sdc_file
 puts "Power technology: $technology, standard-cell corner: $technology_corner, SRAM corner: $sram_corner"

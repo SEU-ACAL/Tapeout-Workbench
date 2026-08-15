@@ -27,6 +27,11 @@ for input_file in "${NETLIST}" "${TEST_DRIVER}" "${SDF_ANNOTATE}" "${STD_CELL_MO
   fi
 done
 
+if [[ -n "${IO_CELL_MODEL:-}" && ! -f "${IO_CELL_MODEL}" ]]; then
+  echo "Missing IO-cell Verilog model: ${IO_CELL_MODEL}" >&2
+  exit 2
+fi
+
 mkdir -p "$(dirname "${HARNESS_FILELIST}")"
 
 netlist_modules="$(mktemp)"
@@ -78,6 +83,9 @@ done < <("${sram_names_command[@]}" "${NETLIST}" | sort -u)
 {
   cat "${HARNESS_FILELIST}"
   printf '%s\n' "${TEST_DRIVER}" "${SDF_ANNOTATE}" "${NETLIST}" "${STD_CELL_MODEL}"
+  if [[ -n "${IO_CELL_MODEL:-}" ]]; then
+    printf '%s\n' "${IO_CELL_MODEL}"
+  fi
   cat "${SRAM_FILELIST}"
 } > "${GLS_FILELIST}"
 
