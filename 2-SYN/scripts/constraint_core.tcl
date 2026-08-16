@@ -31,6 +31,22 @@ foreach {clock_name clock_period} [list \
 set PAD_cpu_jtag_clock_period $JTAG_CLOCK_PERIOD
 set PAD_cpu_serial_clock_period $SERIAL_TL_CLOCK_PERIOD
 
+# JTAG data is conventionally launched by the external tester on TCK falling
+# edges and sampled by the chip on rising edges. TDO launches internally on
+# falling edges and is sampled by the tester on rising edges.
+if {![info exists JTAG_INPUT_DELAY_MAX]} {
+    set JTAG_INPUT_DELAY_MAX [expr $PAD_cpu_jtag_clock_period * 0.2]
+}
+if {![info exists JTAG_INPUT_DELAY_MIN]} {
+    set JTAG_INPUT_DELAY_MIN 0.0
+}
+if {![info exists JTAG_OUTPUT_DELAY_MAX]} {
+    set JTAG_OUTPUT_DELAY_MAX [expr $PAD_cpu_jtag_clock_period * 0.2]
+}
+if {![info exists JTAG_OUTPUT_DELAY_MIN]} {
+    set JTAG_OUTPUT_DELAY_MIN 0.0
+}
+
 # set clk_pll_cpu_period              5
 
 ##### Source Clock Definition ###########################################################
@@ -87,7 +103,7 @@ set_clock_groups -asynchronous \
 # Use independent setup and hold uncertainty budgets.
 set_clock_uncertainty -setup [expr $PAD_cpu_clock_period * 0.3] [get_clocks clock]
 set_clock_uncertainty -hold  0 [get_clocks clock]
-set_clock_uncertainty -setup [expr $PAD_cpu_jtag_clock_period * 0.3] [get_clocks jtag_tck]
+set_clock_uncertainty -setup [expr $PAD_cpu_jtag_clock_period * 0.1] [get_clocks jtag_tck]
 set_clock_uncertainty -hold  0 [get_clocks jtag_tck]
 set_clock_uncertainty -setup [expr $PAD_cpu_serial_clock_period * 0.3] [get_clocks serial_tl_clk]
 set_clock_uncertainty -hold  0 [get_clocks serial_tl_clk]
@@ -99,18 +115,20 @@ set_clock_transition  [expr $PAD_cpu_jtag_clock_period * 0.1]   [get_clocks jtag
 set_clock_transition  [expr $PAD_cpu_serial_clock_period * 0.1] [get_clocks serial_tl_clk]
 
 
-# Input/Output Delay设置 (period的30%)
+# Core and Serial-TL input/output delays use 30% of their clock periods.
+# JTAG uses the independent half-cycle budget defined above.
 
 set_input_delay   [expr $PAD_cpu_clock_period * 0.3]        -clock [get_clocks clock] $data_inputs
 set_output_delay  [expr $PAD_cpu_clock_period * 0.3]        -clock [get_clocks clock] $data_outputs
 
 # Interface delays are relative to their own source clocks, not the SoC clock.
-set_input_delay   [expr $PAD_cpu_jtag_clock_period * 0.3]   -clock [get_clocks jtag_tck] $jtag_input_ports
-# TDO changes on the falling edge of TCK.  Use zero board delay until a
-# package/board timing budget is available, while keeping the endpoint
-# explicitly constrained for check_timing.
-set_output_delay -max 0 -clock [get_clocks jtag_tck] $jtag_output_ports
-set_output_delay -min 0 -clock [get_clocks jtag_tck] $jtag_output_ports
+# TMS/TDI launch externally on TCK falling edges and are sampled internally on
+# rising edges. TDO launches internally on falling edges and is sampled by the
+# external tester on rising edges, so it deliberately does not use -clock_fall.
+set_input_delay -max $JTAG_INPUT_DELAY_MAX -clock [get_clocks jtag_tck] -clock_fall $jtag_input_ports
+set_input_delay -min $JTAG_INPUT_DELAY_MIN -clock [get_clocks jtag_tck] -clock_fall $jtag_input_ports
+set_output_delay -max $JTAG_OUTPUT_DELAY_MAX -clock [get_clocks jtag_tck] $jtag_output_ports
+set_output_delay -min $JTAG_OUTPUT_DELAY_MIN -clock [get_clocks jtag_tck] $jtag_output_ports
 set_input_delay   [expr $PAD_cpu_serial_clock_period * 0.3] -clock [get_clocks serial_tl_clk] $serial_tl_input_ports
 set_output_delay  [expr $PAD_cpu_serial_clock_period * 0.3] -clock [get_clocks serial_tl_clk] $serial_tl_output_ports
 
