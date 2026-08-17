@@ -2,13 +2,13 @@
 ##############################################################################
 ## LIBRARY SETS
 ##############################################################################
-create_library_set -name lib_ss -timing [list $::LIB_SS]
-create_library_set -name lib_ff -timing [list $::LIB_FF]
+create_library_set -name lib_ss -timing $::LIB_SS
+create_library_set -name lib_ff -timing $::LIB_FF
 
 ##############################################################################
 ## OPERATING CONDITIONS
 ##############################################################################
-foreach rc_corner {rc_worst rc_best c_worst c_best rc_typical} {
+foreach rc_corner [dict keys $::QRC_TECH_FILES] {
   if {![dict exists $::RC_CORNER_TEMPERATURES $rc_corner]} {
     error "RC corner '$rc_corner' has no QRC temperature"
   }

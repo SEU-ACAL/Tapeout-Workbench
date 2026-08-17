@@ -21,6 +21,8 @@ if {[get_flowkit_db flow_step_current] ne ""} {
 #-------------------------------------------------------------------------------
 if {[info exists ::env(LSB_MAX_NUM_PROCESSORS)]} {
   setMultiCpuUsage -localCpu $::env(LSB_MAX_NUM_PROCESSORS)
+} elseif {[info exists ::PR_LOCAL_CPU]} {
+  setMultiCpuUsage -localCpu $::PR_LOCAL_CPU
 }
 ################################################################################
 # ATTRIBUTES APPLIED AFTER LOADING A LIBRARY OR DATABASE
@@ -29,7 +31,7 @@ if {[get_designs -quiet *] eq ""} {return}
 
 # Design settings  [setDesignMode -help]
 #-------------------------------------------------------------------------------
-setDesignMode -process 28
+setDesignMode -process $::PR_PROCESS_NM
 
 # Timing settings  [setAnalysisMode -help]
 #-------------------------------------------------------------------------------
@@ -48,7 +50,9 @@ if [is_flow -after flow:route] {
 
 # Tieoff settings  [setTieHieLoMode -help]
 #-------------------------------------------------------------------------------
-setTieHiLoMode -cell {TIEHBWP7T40P140LVT TIELBWP7T40P140LVT}
+if {[llength $::PR_TIE_CELLS] != 0} {
+  setTieHiLoMode -cell $::PR_TIE_CELLS
+}
 
 # Optimization settings  [setOptMode -help]
 #-------------------------------------------------------------------------------
@@ -58,12 +62,17 @@ setOptMode -addInstancePrefix                           "[get_flowkit_db flow_re
 #-------------------------------------------------------------------------------
 set_ccopt_mode -cts_target_skew    $::CTS_TARGET_SKEW
 set_ccopt_mode -cts_target_slew    $::CTS_TARGET_SLEW
-set_ccopt_mode -cts_buffer_cells   {CKBD1BWP7T40P140LVT CKBD2BWP7T40P140LVT CKBD4BWP7T40P140LVT CKBD8BWP7T40P140LVT CKBD16BWP7T40P140LVT CKBD20BWP7T40P140LVT}
-set_ccopt_mode -cts_inverter_cells {INVD1BWP7T40P140LVT INVD2BWP7T40P140LVT INVD4BWP7T40P140LVT INVD8BWP7T40P140LVT}
+if {[info exists ::CTS_MAX_FANOUT]} {
+  set_ccopt_property max_fanout $::CTS_MAX_FANOUT
+}
+set_ccopt_mode -cts_buffer_cells   $::PR_CTS_BUFFER_CELLS
+set_ccopt_mode -cts_inverter_cells $::PR_CTS_INVERTER_CELLS
 
 # Filler settings  [setFillerMode -help]
 #-------------------------------------------------------------------------------
-setFillerMode -core {FILL64BWP7T40P140LVT FILL32BWP7T40P140LVT FILL16BWP7T40P140LVT FILL8BWP7T40P140LVT FILL4BWP7T40P140LVT FILL3BWP7T40P140LVT FILL2BWP7T40P140LVT}
+if {[llength $::PR_FILLER_CELLS] != 0} {
+  setFillerMode -core $::PR_FILLER_CELLS
+}
 
 # Routing settings  [setNanoRouteMode -help]
 #-------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 create_flow_step -name init_design -owner design -write_db {
   set ::init_mmmc_file        [get_flowkit_db init_flow_directory]/mmmc_config.tcl
-  set ::init_lef_file         [list $::TECH_LEF $::SITE_LEF $::CELL_LEF]
+  set ::init_lef_file         $::PR_LEF_FILES
   set ::init_verilog          $::NETLIST
   set ::init_top_cell         $::TOP_MODULE
   init_design

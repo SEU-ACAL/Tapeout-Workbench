@@ -51,6 +51,8 @@ proc ::pr_apply_upstream_path_groups {sdc_file} {
     create_clock
     set_clock_uncertainty
     set_clock_transition
+    set_clock_groups
+    set_false_path
     set_input_delay
     set_output_delay
   }
@@ -199,6 +201,41 @@ proc ::pr_check_io_pin_placement {def_file report_file} {
   set report [open $report_file w]
   set unplaced_ports {}
 
+  if {$::PR_IO_PLACEMENT_CHECK_MODE eq "pad_cells"} {
+    set pad_count 0
+    foreach pad_cell $::PR_SIGNAL_PAD_CELLS {
+      foreach inst [dbGet -p2 top.insts.cell.name $pad_cell] {
+        set inst_name [dbGet $inst.name]
+        set placement [dbGet $inst.pStatus]
+        incr pad_count
+        puts $report "pad=$inst_name cell=$pad_cell status=$placement"
+        if {$placement ni {fixed placed cover}} {
+          lappend unplaced_ports $inst_name
+        }
+      }
+    }
+    foreach pad_cell $::PR_POWER_PAD_CELLS {
+      set count 0
+      foreach inst [dbGet -p2 top.insts.cell.name $pad_cell] {
+        set placement [dbGet $inst.pStatus]
+        incr count
+        puts $report "power_pad=[dbGet $inst.name] cell=$pad_cell status=$placement"
+        if {$placement ni {fixed placed cover}} {
+          lappend unplaced_ports [dbGet $inst.name]
+        }
+      }
+      if {$count == 0} {
+        lappend unplaced_ports "missing_$pad_cell"
+      }
+    }
+    close $report
+    if {$pad_count == 0 || [llength $unplaced_ports] != 0} {
+      error "Unplaced I/O pad(s): $unplaced_ports; see $report_file"
+    }
+    puts "PR_IO_PIN_PLACEMENT status=pass pad_instances=$pad_count"
+    return
+  }
+
   foreach_in_collection port [get_ports *] {
     set port_name [get_object_name $port]
     set record_start [string first "- $port_name " $def_text]
@@ -274,21 +311,25 @@ create_flow_step -name gate_final_signoff -owner design -exclude_time_metric {
 }
 
 proc ::pr_write_merged_gds {out_dir} {
-  foreach required_file [list $::PR_GDS_MAP_GENERATOR $::PR_STDCELL_GDS] {
+  foreach required_file $::PR_GDS_MERGE_FILES {
     if {![file isfile $required_file]} {
       error "Required GDS export input is missing: $required_file"
     }
   }
 
   set map_file [file join $out_dir gds2.map]
-  set original_dir [pwd]
-  set map_status [catch {
-    cd $out_dir
-    exec $::PR_GDS_MAP_GENERATOR -layer 10 -top 2 -type Z -metalY 2
-  } map_message map_options]
-  cd $original_dir
-  if {$map_status != 0} {
-    return -options $map_options "GDS layer-map generation failed: $map_message"
+  if {$::PR_GDS_MAP_GENERATOR ne ""} {
+    set original_dir [pwd]
+    set map_status [catch {
+      cd $out_dir
+      exec $::PR_GDS_MAP_GENERATOR {*}$::PR_GDS_MAP_GENERATOR_ARGS
+    } map_message map_options]
+    cd $original_dir
+    if {$map_status != 0} {
+      return -options $map_options "GDS layer-map generation failed: $map_message"
+    }
+  } else {
+    file copy -force $::PR_GDS_MAP_FILE $map_file
   }
   if {![file isfile $map_file]} {
     error "GDS layer-map generation did not create $map_file"
@@ -300,7 +341,7 @@ proc ::pr_write_merged_gds {out_dir} {
     -libName $::TOP_MODULE \
     -structureName $::TOP_MODULE \
     -mapFile $map_file \
-    -merge $::PR_STDCELL_GDS \
+    -merge $::PR_GDS_MERGE_FILES \
     -mode ALL \
     -units 1000 \
     -dieAreaAsBoundary \
@@ -317,7 +358,7 @@ create_flow_step -name write_outputs -owner design -write_db {
   if {![info exists ::PR_FINAL_SIGNOFF_STATUS] || $::PR_FINAL_SIGNOFF_STATUS ne "pass"} {
     error "Final outputs are blocked until all signoff checks pass"
   }
-  set out_dir [file join $::PR_ROOT outputs]
+  set out_dir $::PR_OUTPUT_DIR
   file mkdir $out_dir
   saveNetlist -topModuleFirst -topCell $::TOP_MODULE [file join $out_dir $::TOP_MODULE.v]
   defOut [file join $out_dir $::TOP_MODULE.def]
@@ -325,7 +366,7 @@ create_flow_step -name write_outputs -owner design -write_db {
   # handle even when post-route parasitics were used for timing.  Rebuild it
   # before emitting corner-specific SPEF files.
   extractRC -noRouteCheck
-  foreach rc_corner {rc_worst rc_best} {
+  foreach rc_corner $::PR_SPEF_RC_CORNERS {
     rcOut -spef [file join $out_dir $::TOP_MODULE.$rc_corner.spef] -rc_corner $rc_corner
   }
   set gds_artifacts [::pr_write_merged_gds $out_dir]
@@ -350,14 +391,14 @@ create_flow_step -name write_outputs -owner design -write_db {
   puts $manifest "gds=[dict get $gds_artifacts gds]"
   puts $manifest "gds_layer_map=[dict get $gds_artifacts map]"
   puts $manifest "gds_streamout_report=[dict get $gds_artifacts report]"
-  puts $manifest "gds_stdcell_library=$::PR_STDCELL_GDS"
+  puts $manifest "gds_merge_libraries=$::PR_GDS_MERGE_FILES"
   foreach spec $::PR_MMMC_VIEW_SPECS {
     lassign $spec view library_set rc_corner check_type
     lassign [dict get $::PR_LIBRARY_PVT $library_set] voltage temperature
     set rc_temperature [dict get $::RC_CORNER_TEMPERATURES $rc_corner]
     puts $manifest "analysis_view=$view check=$check_type library=$library_set voltage=$voltage temperature=$temperature rc_corner=$rc_corner rc_temperature=${rc_temperature}C"
   }
-  foreach rc_corner {rc_worst rc_best c_worst c_best rc_typical} {
+  foreach rc_corner [dict keys $::QRC_TECH_FILES] {
     puts $manifest "qrc_$rc_corner=[dict get $::QRC_TECH_FILES $rc_corner]"
   }
   foreach check {clock_drv drc connectivity antenna final} {

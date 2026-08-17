@@ -1,15 +1,20 @@
 addNet VDD -power
 addNet VSS -ground
-globalNetConnect VDD -type pgpin -pin VDD -inst *
-globalNetConnect VSS -type pgpin -pin VSS -inst *
+foreach connection $::PR_POWER_PIN_MAP {
+  lassign $connection net pin
+  globalNetConnect $net -type pgpin -pin $pin -inst *
+}
 applyGlobalNets
 
 addRing -type core_rings -nets {VDD VSS} \
-  -layer [list top $::PG_RING_HORIZONTAL bottom $::PG_RING_HORIZONTAL \
-               left $::PG_RING_VERTICAL right $::PG_RING_VERTICAL] \
-  -width 2 -spacing 1 -offset 1
+  -layer [list top $::PR_PG_RING_HORIZONTAL bottom $::PR_PG_RING_HORIZONTAL \
+               left $::PR_PG_RING_VERTICAL right $::PR_PG_RING_VERTICAL] \
+  -width $::PR_PG_RING_WIDTH -spacing $::PR_PG_RING_SPACING -offset $::PR_PG_RING_OFFSET
 
-addWellTap -cell TAPCELLBWP7T40P140 -cellInterval 30
-addStripe -nets {VDD VSS} -layer $::PG_RING_VERTICAL -direction vertical \
-  -width 1 -spacing 1 -set_to_set_distance 40
+if {$::PR_WELL_TAP_CELL ne ""} {
+  addWellTap -cell $::PR_WELL_TAP_CELL -cellInterval $::PR_WELL_TAP_INTERVAL
+}
+addStripe -nets {VDD VSS} -layer $::PR_PG_RING_VERTICAL -direction vertical \
+  -width $::PR_PG_STRIPE_WIDTH -spacing $::PR_PG_STRIPE_SPACING \
+  -set_to_set_distance $::PR_PG_STRIPE_PITCH
 sroute -connect corePin -nets {VDD VSS}

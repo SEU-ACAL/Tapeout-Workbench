@@ -1,92 +1,48 @@
-# Project inputs and technology settings.
+# Shared P&R configuration.  Select a technology before sourcing run_flow.tcl:
+#   PR_TECHNOLOGY=smic180 innovus -no_gui -execute "source scripts/run_flow.tcl; ..."
+# The default preserves the existing TSMC28 multiplier implementation flow.
 
 set ::PR_ROOT [file normalize [file join [file dirname [info script]] ..]]
-set ::TOP_MODULE multiplier_pipe3
-set ::NETLIST [file join $::PR_ROOT .. 2-SYN outputs 0715_0544 multiplier_pipe3.v]
-set ::SDC [file join $::PR_ROOT scripts constraint_pr.sdc]
-# This is the current synthesis handoff.  Confirm the interface timing budget
-# before changing the default directory or the PR-only uncertainty below.
-set ::PR_SDC_UPSTREAM_DIR [file join $::PR_ROOT .. 2-SYN outputs 0715_0544]
-set ::PR_CLOCK_PORT clock
-
-set ::CELL_LEF /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/lef/tcbn28hpcplusbwp7t40p140lvt.lef
-set ::PR_GDS_MAP_GENERATOR /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/lef/tcbn28hpcplusbwp7t40p140lvt_110a/techfiles/gds2map.sh
-set ::PR_STDCELL_GDS /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Back_End/gds/tcbn28hpcplusbwp7t40p140lvt_110a/tcbn28hpcplusbwp7t40p140lvt.gds
-set ::SITE_LEF [file join $::PR_ROOT scripts core7T.lef]
-set ::LIB_ROOT /data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140lvt_180a
-set ::LIB_SS [file join $::LIB_ROOT tcbn28hpcplusbwp7t40p140lvtssg0p81v125c_ccs.lib]
-set ::LIB_FF [file join $::LIB_ROOT tcbn28hpcplusbwp7t40p140lvtffg1p05vm40c_ccs.lib]
-set ::TECH_LEF /data2/TSMC28/TF/N28_PRTF_Cad_v1d5a/PR_tech/Cadence/LefHeader/HVH/tsmcn28_10lm5X2Y2ZUTRDL.tlef
-
-# The non-_T 1P10M_5X2Y2Z files below are the characterized default QRC
-# corners.  The _T variants remain available in the PDK but are intentionally
-# not selected without PDK guidance.
-set ::QRC_ROOT /data2/TSMC28/TF
-set ::QRC_TECH_FILES [dict create \
-  rc_worst   [file join $::QRC_ROOT 1p10m_5x2y2z_rcworst qrcTechFile] \
-  rc_best    [file join $::QRC_ROOT 1p10m_5x2y2z_rcbest qrcTechFile] \
-  c_worst    [file join $::QRC_ROOT 1p10m_5x2y2z_cworst qrcTechFile] \
-  c_best     [file join $::QRC_ROOT 1p10m_5x2y2z_cbest qrcTechFile] \
-  rc_typical [file join $::QRC_ROOT 1p10m_5x2y2z_typical qrcTechFile]]
-
-# QRC supplies the physical R/C model.  These unity factors document that no
-# additional unqualified derate is being layered onto that model.
-set ::RC_CORNER_SCALES [dict create \
-  rc_worst   {1.0 1.0 1.0} \
-  rc_best    {1.0 1.0 1.0} \
-  c_worst    {1.0 1.0 1.0} \
-  c_best     {1.0 1.0 1.0} \
-  rc_typical {1.0 1.0 1.0}]
-
-# Temperature in degrees Celsius passed to QRC for each extraction corner.
-# Keep active RC corners aligned with the Liberty PVT of their analysis view.
-set ::RC_CORNER_TEMPERATURES [dict create \
-  rc_worst   125 \
-  rc_best    -40 \
-  c_worst    125 \
-  c_best     -40 \
-  rc_typical 25]
-
-# Each entry is {analysis_view library_set rc_corner check_type}.  Keep the
-# nominal RC extremes and the capacitance extremes active so reports expose
-# both delay and coupling-sensitive timing behavior.  New views must use a
-# characterized library/RC pair from the qualified PDK matrix.
-set ::PR_MMMC_VIEW_SPECS [list \
-  [list view_setup          lib_ss rc_worst setup] \
-  [list view_setup_cworst   lib_ss c_worst  setup] \
-  [list view_hold           lib_ff rc_best  hold]  \
-  [list view_hold_cbest     lib_ff c_best   hold]]
-
-set ::PR_LIBRARY_PVT [dict create \
-  lib_ss {0.81V 125C} \
-  lib_ff {1.05V -40C}]
-
-set ::FLOORPLAN_DEF ""
-set ::CORE_SITE core7T
-set ::CORE_ASPECT_RATIO 1.0
-set ::CORE_UTILIZATION 0.70
-set ::CORE_MARGIN 10.0
-set ::IO_PIN_INPUT_SIDE left
-set ::IO_PIN_OUTPUT_SIDE right
-set ::IO_PIN_INPUT_LAYER M3
-set ::IO_PIN_OUTPUT_LAYER M3
-
-set ::CTS_TARGET_SKEW 0.10
-set ::CTS_TARGET_SLEW 0.10
-set ::PG_RING_HORIZONTAL M9
-set ::PG_RING_VERTICAL M8
-set ::PR_FINAL_REPORT_DIR [file join $::PR_ROOT reports final]
-# Populate this dictionary only with approved signoff waivers, for example:
-# dict set ::PR_SIGNOFF_WAIVERS drc "waiver-id: reason"
-set ::PR_SIGNOFF_WAIVERS [dict create]
-
-foreach file [concat [list $::NETLIST $::SDC $::TECH_LEF $::SITE_LEF $::CELL_LEF $::LIB_SS $::LIB_FF $::PR_GDS_MAP_GENERATOR $::PR_STDCELL_GDS] [dict values $::QRC_TECH_FILES]] {
-  if {![file exists $file]} {
-    error "Required PR input is missing: $file"
+set ::PR_WORKBENCH_ROOT [file normalize [file join $::PR_ROOT .. ..]]
+if {![info exists ::PR_TECHNOLOGY]} {
+  if {[info exists ::env(PR_TECHNOLOGY)] && $::env(PR_TECHNOLOGY) ne ""} {
+    set ::PR_TECHNOLOGY $::env(PR_TECHNOLOGY)
+  } else {
+    set ::PR_TECHNOLOGY tsmc28
   }
 }
 
-set ::PR_UPSTREAM_SDC [file join $::PR_SDC_UPSTREAM_DIR ${::TOP_MODULE}.sdc]
-if {![file exists $::PR_UPSTREAM_SDC]} {
-  error "Required upstream SDC is missing: $::PR_UPSTREAM_SDC"
+set pr_technology_file [file join $::PR_ROOT scripts technologies ${::PR_TECHNOLOGY}.tcl]
+if {![file isfile $pr_technology_file]} {
+  error "Unsupported PR_TECHNOLOGY '$::PR_TECHNOLOGY'; expected one of: tsmc28, smic180"
 }
+source $pr_technology_file
+
+# A pad-aware technology can receive its approved pad-ring DEF without editing
+# the technology file. The default remains empty for the TSMC core flow.
+if {[info exists ::env(PR_FLOORPLAN_DEF)] && $::env(PR_FLOORPLAN_DEF) ne ""} {
+  set ::FLOORPLAN_DEF [file normalize $::env(PR_FLOORPLAN_DEF)]
+}
+
+set ::PR_FINAL_REPORT_DIR [file join $::PR_ROOT reports $::PR_TECHNOLOGY final]
+set ::PR_OUTPUT_DIR [file join $::PR_ROOT outputs $::PR_TECHNOLOGY]
+set ::PR_SIGNOFF_WAIVERS [dict create]
+
+foreach file [concat [list $::NETLIST $::SDC $::PR_UPSTREAM_SDC] \
+    $::PR_LEF_FILES $::LIB_SS $::LIB_FF [dict values $::QRC_TECH_FILES] \
+    $::PR_GDS_MERGE_FILES] {
+  if {![file isfile $file]} {
+    error "Required PR input is missing: $file"
+  }
+}
+if {$::PR_GDS_MAP_GENERATOR ne "" && ![file isfile $::PR_GDS_MAP_GENERATOR]} {
+  error "Required GDS map generator is missing: $::PR_GDS_MAP_GENERATOR"
+}
+if {$::PR_GDS_MAP_FILE ne "" && ![file isfile $::PR_GDS_MAP_FILE]} {
+  error "Required GDS map file is missing: $::PR_GDS_MAP_FILE"
+}
+if {$::PR_GDS_MAP_GENERATOR eq "" && $::PR_GDS_MAP_FILE eq ""} {
+  error "Technology $::PR_TECHNOLOGY provides neither PR_GDS_MAP_GENERATOR nor PR_GDS_MAP_FILE"
+}
+
+puts "PR_TECHNOLOGY name=$::PR_TECHNOLOGY process=${::PR_PROCESS_NM}nm top=$::TOP_MODULE"

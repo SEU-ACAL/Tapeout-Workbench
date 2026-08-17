@@ -1,13 +1,16 @@
 # BACKEND/PR：Place & Route 流程说明
 
-本目录是 `multiplier_pipe3` 的 Innovus Place & Route（P&R）工程。流程由 Flowkit 定义，使用项目脚本完成 floorplan、布局优化、CTS、布线、post-route 优化、时序报告和交付物输出。
+本目录是参数化的 Innovus Place & Route（P&R）工程。流程由 Flowkit 定义，使用项目脚本完成 floorplan、布局优化、CTS、布线、post-route 优化、时序报告和交付物输出。
+
+当前支持：`tsmc28`（默认，`multiplier_pipe3`）和 `smic180`（`ChipTop`）。工艺配置位于 `scripts/technologies/`；共用 flow 不包含工艺专属 LEF、Liberty、QRC、CTS、filler 或 GDS 设置。
 
 ## 1. 目录结构
 
 ```text
 scripts/                 Flowkit、Innovus 和项目配置
 scripts/run_flow.tcl     Flowkit 入口及 block flow 定义
-scripts/project_config.tcl  网表、SDC、LEF、LIB、QRC 和 MMMC 配置
+scripts/project_config.tcl  工艺选择、输入校验和共用配置
+scripts/technologies/       各工艺的网表、SDC、LEF、LIB、QRC、MMMC、PG、GDS 配置
 runs/<run_name>/         每次运行的数据库、日志和中间文件
 reports/final/           最终报告
 reports/final/timing/    按 setup/hold、view、path group 分层的时序报告
@@ -30,7 +33,7 @@ flowtool -version
 
 ## 3. 完整运行（推荐）
 
-在 Innovus 内 source Flowkit 入口，然后执行 `block` flow：
+在 Innovus 内 source Flowkit 入口，然后执行 `block` flow。未设置参数时默认使用 TSMC28：
 
 ```bash
 RUN_NAME=block-$(date +%Y%m%d-%H%M%S)
@@ -38,6 +41,18 @@ innovus -no_gui \
   -log /tmp/icwb_pr.log \
   -execute "source scripts/run_flow.tcl; run_flow -flow block -directory runs/$RUN_NAME"
 ```
+
+SMIC180 ChipTop 使用当前 `0816_0804` 综合交付，必须传入已固定 SP018RP signal pad、`PVDD1R`、`PVSS1R` 的 pad-ring DEF：
+
+```bash
+PR_TECHNOLOGY=smic180 \
+PR_FLOORPLAN_DEF=/absolute/path/ChipTop_pad_ring.def \
+innovus -no_gui \
+  -log /tmp/icwb_pr_smic180.log \
+  -execute 'source scripts/run_flow.tcl; run_flow -flow block -directory runs/smic180-<run_name>'
+```
+
+SMIC180 使用 native QRC：setup 为 SS 1.62 V / 125 C，hold 为 FF 1.98 V / -40 C；标准单元、SP018RP IO 和六个 SRAM GDS 会 merge 到 `outputs/smic180/`。
 
 也可以使用固定名称，便于复现或覆盖前先确认目录状态：
 
@@ -56,7 +71,7 @@ floorplan -> prects -> cts -> postcts -> route -> postroute
 
 ## 4. MMMC 配置
 
-当前启用四个 analysis view，定义在 `scripts/project_config.tcl`，由 `scripts/mmmc_config.tcl` 创建并通过 `set_analysis_view` 激活：
+TSMC28 默认启用四个 analysis view，定义在 `scripts/technologies/tsmc28.tcl`，由 `scripts/mmmc_config.tcl` 创建并通过 `set_analysis_view` 激活：
 
 | View | 检查类型 | Library/PVT | RC corner | 用途 |
 | --- | --- | --- | --- | --- |
@@ -69,7 +84,9 @@ floorplan -> prects -> cts -> postcts -> route -> postroute
 
 ## 5. I/O pin planning
 
-未提供 `FLOORPLAN_DEF` 时，流程会将输入端口固定在左边界、输出端口固定在右边界；`clock` 因而获得物理入口，CTS 可将 source-to-root 连线纳入实现。层和边界由 `IO_PIN_*` 配置项控制。
+对 `tsmc28`，未提供 `FLOORPLAN_DEF` 时，流程会将输入端口固定在左边界、输出端口固定在右边界；`clock` 因而获得物理入口，CTS 可将 source-to-root 连线纳入实现。层和边界由 `IO_PIN_*` 配置项控制。
+
+对 `smic180`，综合网表已有 28 个 SP018RP signal pad，必须传入由 floorplan 生成的 `FLOORPLAN_DEF`。该 DEF 还必须放置并固定 `PVDD1R`/`PVSS1R`，再由共用 PG 脚本连接 `VDD`/`VSS`、`VNW`/`VPW`。`PVDD2R`/`PVSS2R` 仅用于 pad-ring 连续性，不作为供电连接 pad。
 
 CTS 前与最终报告阶段都会导出 I/O placement DEF 并检查每个顶层端口均为 `PLACED`、`FIXED` 或 `COVER`；任一未放置端口都会阻止 CTS 或交付。若项目有封装或 block pin plan，应设置 `FLOORPLAN_DEF` 并确保其中包含所有 I/O 的位置。
 
@@ -137,24 +154,23 @@ run_flow -flow block \
 先查看 gate 汇总：
 
 ```bash
-cat outputs/manifest.txt
+cat outputs/tsmc28/manifest.txt
 ```
 
 正常交付至少应包含：
 
 ```text
-outputs/multiplier_pipe3.v
-outputs/multiplier_pipe3.def
-outputs/multiplier_pipe3.rc_worst.spef
-outputs/multiplier_pipe3.rc_best.spef
-outputs/multiplier_pipe3.gds
-outputs/multiplier_pipe3.streamout.rpt
-outputs/gds2.map
-outputs/manifest.txt
+outputs/<technology>/<top>.v
+outputs/<technology>/<top>.def
+outputs/<technology>/<top>.<rc_corner>.spef
+outputs/<technology>/<top>.gds
+outputs/<technology>/<top>.streamout.rpt
+outputs/<technology>/gds2.map
+outputs/<technology>/manifest.txt
 ```
 
 `write_outputs` 在 final signoff gate 通过后，使用当前 Innovus 数据库导出
-merged GDSII，并将标准单元 GDS 合并到 `outputs/<top>.gds`。因此 GDS 与门级
+merged GDSII，并将工艺配置指定的 GDS 合并到 `outputs/<technology>/<top>.gds`。因此 GDS 与门级
 Verilog 均来自同一次最终 P&R 发布，可直接作为后续 DRC/LVS 输入。
 
 同时检查最终报告：
@@ -179,5 +195,5 @@ less reports/final/io_pin_placement.rpt
 ## 11. DRC/LVS 物理验证
 
 Calibre DRC/LVS 已作为独立后端阶段移至 `BACKEND/DRC_LVS/`。P&R 负责交付
-`outputs/<top>.gds` 和 `outputs/<top>.v`；验证阶段显式接收这些文件，结果不再
+`outputs/<technology>/<top>.gds` 和 `outputs/<technology>/<top>.v`；验证阶段显式接收这些文件，结果不再
 写入本目录。具体命令见 `../DRC_LVS/README.md`。
