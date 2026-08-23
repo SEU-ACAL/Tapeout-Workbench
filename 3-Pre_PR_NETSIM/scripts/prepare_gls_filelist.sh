@@ -80,6 +80,15 @@ while IFS= read -r macro_name; do
   printf '%s\n' "${macro_model}" >> "${SRAM_FILELIST}"
 done < <("${sram_names_command[@]}" "${NETLIST}" | sort -u)
 
+ROM_FILELIST="${BUILD_DIR}/rom.f"
+: > "${ROM_FILELIST}"
+if [[ -n "${ROM_MODEL_FILES:-}" ]]; then
+  for rom_model in ${ROM_MODEL_FILES}; do
+    [[ -f "${rom_model}" ]] || { echo "Missing ROM Verilog model: ${rom_model}" >&2; exit 2; }
+    printf '%s\n' "${rom_model}" >> "${ROM_FILELIST}"
+  done
+fi
+
 {
   cat "${HARNESS_FILELIST}"
   printf '%s\n' "${TEST_DRIVER}" "${SDF_ANNOTATE}" "${NETLIST}" "${STD_CELL_MODEL}"
@@ -87,6 +96,7 @@ done < <("${sram_names_command[@]}" "${NETLIST}" | sort -u)
     printf '%s\n' "${IO_CELL_MODEL}"
   fi
   cat "${SRAM_FILELIST}"
+  cat "${ROM_FILELIST}"
 } > "${GLS_FILELIST}"
 
 printf 'Generated GLS filelist: %s\n' "${GLS_FILELIST}"

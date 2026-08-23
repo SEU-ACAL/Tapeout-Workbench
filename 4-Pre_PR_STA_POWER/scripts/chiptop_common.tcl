@@ -21,6 +21,21 @@ proc chiptop_sram_link_library {sram_root sram_corner sram_db_template} {
     return $libraries
 }
 
+proc chiptop_rom_link_library {rom_root rom_corner rom_db_template} {
+    if {$rom_root eq "" || $rom_db_template eq ""} {
+        return [list]
+    }
+    set rom_names [list \
+        S018VM_X64Y16D64_PM \
+        S018VM_X8Y16D64_PM]
+    set libraries [list]
+    foreach rom_name $rom_names {
+        set relative_db [format $rom_db_template $rom_name $rom_corner]
+        lappend libraries [file join $rom_root $relative_db]
+    }
+    return $libraries
+}
+
 proc require_files {label files} {
     foreach input_file $files {
         if {![file exists $input_file]} {

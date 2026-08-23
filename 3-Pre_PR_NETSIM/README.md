@@ -17,9 +17,10 @@ make -C 3-Pre_PR_NETSIM run_zero TECH=smic180 NETLIST_RUN=0731_0611 \
   BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
 ```
 
-`TECH` selects the standard-cell and SRAM Verilog models. Supported values are
+`TECH` selects the standard-cell, SRAM, and (for SMIC180) ROM Verilog models. Supported values are
 `smic180` (the default for `0731_0611`) and `tsmc28`. The SMIC180 flow uses the SCC018UG UHD
-RVT model and the SMIC SRAM models at the `ss_1.62_125` corner:
+RVT model, the SMIC SRAM models, and the `S018VM` BootROM/DebugROM models at the
+`ss_1.62_125` corner:
 
 ```sh
 make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 NETLIST_RUN=<smic180-run>
@@ -38,6 +39,9 @@ make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 \
 `SRAM_MODEL_TEMPLATE` is resolved below each macro directory. Its first `%s`
 is replaced by the macro name and its optional second `%s` by `SRAM_CORNER`.
 For example, TSMC28 uses `VERILOG/%s_%s.v`, while SMIC180 uses `%s.v`.
+SMIC180 also appends the generated `S018VM_X64Y16D64_PM.v` and
+`S018VM_X8Y16D64_PM.v` models; override them with `ROM_MODEL_FILES` when the
+ROM IP is installed elsewhere.
 
 `gls_zero` builds a no-SDF simulation without VCS register-initialization
 options. `run_zero` uses Chipyard's DRAMSim and ELF-loading arguments, with a

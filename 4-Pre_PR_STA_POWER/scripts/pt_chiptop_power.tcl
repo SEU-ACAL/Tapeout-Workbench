@@ -20,11 +20,24 @@ if {[info exists ::env(IO_DB)]} {
 set sram_root [require_env SRAM_ROOT]
 set sram_corner [require_env SRAM_CORNER]
 set sram_db_template [require_env SRAM_DB_TEMPLATE]
+set rom_root ""
+set rom_corner ""
+set rom_db_template ""
+if {[info exists ::env(ROM_ROOT)]} {
+    set rom_root $::env(ROM_ROOT)
+}
+if {[info exists ::env(ROM_CORNER)]} {
+    set rom_corner $::env(ROM_CORNER)
+}
+if {[info exists ::env(ROM_DB_TEMPLATE)]} {
+    set rom_db_template $::env(ROM_DB_TEMPLATE)
+}
 set technology [require_env TECH]
 set technology_corner [require_env TECH_CORNER]
 
 set sram_link_library [chiptop_sram_link_library $sram_root $sram_corner $sram_db_template]
-set power_link_library [concat [list $stdcell_db] $sram_link_library]
+set rom_link_library [chiptop_rom_link_library $rom_root $rom_corner $rom_db_template]
+set power_link_library [concat [list $stdcell_db] $sram_link_library $rom_link_library]
 if {$io_db ne ""} {
     lappend power_link_library $io_db
 }
@@ -34,7 +47,7 @@ set target_library $stdcell_db
 set link_library [concat * $power_link_library]
 
 load_chiptop_design $top_design $netlist $sdc_file
-puts "Power technology: $technology, standard-cell corner: $technology_corner, SRAM corner: $sram_corner"
+puts "Power technology: $technology, standard-cell corner: $technology_corner, SRAM corner: $sram_corner, ROM corner: $rom_corner"
 
 file mkdir $power_out_dir
 redirect "$power_out_dir/check_timing.rpt" { check_timing -verbose }

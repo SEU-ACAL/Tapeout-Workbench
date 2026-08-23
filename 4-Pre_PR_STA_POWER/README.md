@@ -16,17 +16,18 @@ make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=0731_0611
 make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run>
 ```
 
-The SMIC180 configuration uses voltage-consistent standard-cell and S018SP
-SRAM `SS 1.62V/125C` views.
+The SMIC180 configuration uses voltage-consistent standard-cell, S018SP SRAM,
+and S018VM BootROM/DebugROM `SS 1.62V/125C` views.
 
 Technology configuration files set `STD_CELL_DB`, `SRAM_ROOT`, `SRAM_CORNER`,
-and the SRAM DB layout. All remain overridable from the command line for a
+`ROM_ROOT`, `ROM_CORNER`, and the SRAM/ROM DB layouts. All remain overridable from the command line for a
 different characterized corner:
 
 ```sh
 make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run> \
   STD_CELL_DB=/path/to/stdcell.db SRAM_ROOT=/path/to/sram-root \
-  SRAM_CORNER=<corner> SRAM_DB_TEMPLATE='%s_%s.db'
+  SRAM_CORNER=<corner> SRAM_DB_TEMPLATE='%s_%s.db' \
+  ROM_ROOT=/path/to/rom-db ROM_CORNER=<corner> ROM_DB_TEMPLATE='%s_%s.db'
 ```
 
 `PT_SHELL` defaults to `pt_shell`. Use a PrimeTime PX/PrimePower version that

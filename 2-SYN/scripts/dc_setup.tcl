@@ -61,10 +61,13 @@ source $tech_setup
 if {![info exists io_link_library]} {
     set io_link_library [list]
 }
+if {![info exists rom_link_library]} {
+    set rom_link_library [list]
+}
 
-foreach sram_db $sram_link_library {
-    if {![file exists $sram_db]} {
-        error "Missing SRAM timing library: $sram_db"
+foreach memory_db [concat $sram_link_library $rom_link_library] {
+    if {![file exists $memory_db]} {
+        error "Missing memory timing library: $memory_db"
     }
 }
 
@@ -72,4 +75,5 @@ set link_library      " * \
                         $target_library \
                         $io_link_library \
                         $sram_link_library \
+                        $rom_link_library \
                         $synthetic_library"
