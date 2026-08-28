@@ -2,6 +2,20 @@ if {![info exists TOP_MODULE]} {
     set TOP_MODULE ChipTop
 }
 
+# Record Formality guidance in the same run directory as the netlist.  The
+# site-wide DC setup may open a fixed default.svf before this script starts;
+# close it so each synthesis run has a self-contained SVF artifact.
+if {![info exists data] || $data eq ""} {
+    error "Synthesis run id variable 'data' is not set; invoke through run_core"
+}
+set svf_output ./outputs/$data/${TOP_MODULE}.svf
+file mkdir [file dirname $svf_output]
+catch {set_svf -off}
+if {![set_svf $svf_output]} {
+    error "Failed to enable Formality SVF recording: $svf_output"
+}
+puts "Formality SVF output: $svf_output"
+
 set_host_options -max_cores 16
 set compile_enable_register_merging    true
 set compile_seqmap_propagate_constants false
@@ -184,3 +198,6 @@ foreach path_group $TIMING_PATH_GROUPS {
 }
 
 report_reference                                          > ./rpt/$data/${TOP_MODULE}_ref.rpt
+
+# Flush and close the per-run SVF before leaving dc_shell.
+set_svf -off

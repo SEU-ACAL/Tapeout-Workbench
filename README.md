@@ -96,8 +96,9 @@ cd /data1/GB/ic_workbench/2-SYN
   --sram-wrapper /path/to/top.mems.v
 ```
 
-常用产物为 `ChipTop.v`、`ChipTop.sdc`、`ChipTop.sdf`、`ChipTop.ddc` 和
-`link_library.txt`。`--tech smic180` 时，标准单元、SRAM、ROM 和 IO 库路径
+常用产物为 `ChipTop.v`、`ChipTop.sdc`、`ChipTop.sdf`、`ChipTop.ddc`、
+`ChipTop.svf` 和 `link_library.txt`。其中 `ChipTop.svf` 是本次综合对应的
+Formality 指导文件，必须与同一目录下的综合网表配套使用。`--tech smic180` 时，标准单元、SRAM、ROM 和 IO 库路径
 由 `2-SYN/scripts/tech/smic180.tcl` 定义，也可按该文件修改。
 
 ## 5. 门级仿真：`3-Pre_PR_NETSIM`
@@ -321,16 +322,58 @@ bash BACKEND/DRC_LVS/scripts/generate_lvs_source.sh \
 
 ## 10. Formality 等价性检查：`FM`
 
-`FM` 当前脚本是 `shift_reg` 示例，引用 `2-SYN/default.svf` 和固定的综合运行号。
-在 Formality 环境中从根目录执行：
+`FM` 支持选择工艺库，并通过参数指定参考 RTL、综合网表和顶层模块。
+默认示例使用当前仓库中的 `multiplier_pipe3`：
 
 ```bash
 cd /data1/GB/ic_workbench
-(cd FM && ./run_fm)
+(cd FM && ./run_fm --tech tsmc28 \
+  --top multiplier_pipe3 \
+  --rtl ../0-RTL/multi.v \
+  --netlist ../2-SYN/outputs/0715_0544/multiplier_pipe3.v)
 ```
 
-日志写入 `FM/logs/<月日_时分>.log`。更换设计或综合运行号时，修改
-`FM/scripts/fm.tcl` 中的 `top_design`、RTL、网表和 `dc_date`。
+可选内置工艺库为 `tsmc28` 和 `smic180`。这两个选项直接复用
+`2-SYN/scripts/tech/` 中的综合配置，会同时加载标准单元、IO、SRAM 和 ROM 库，
+不需要手工拼接 `--link-library`。也可以用 `--target-db` 覆盖标准单元库：
+
+```bash
+(cd FM && ./run_fm --target-db /path/to/custom.db \
+  --top <top_module> --rtl /path/ref.v --netlist /path/impl.v \
+  [--svf /path/run.svf])
+```
+
+针对综合生成的 Chipyard `ChipTop` 网表（包含 SRAM/ROM 宏模型），将 `<run-id>` 替换为综合时使用的同一个 run 名称后运行：
+
+```bash
+cd /data1/GB/ic_workbench
+FM/run_fm --tech smic180 \
+  --top ChipTop \
+  --rtl /data1/GB/chipyard-main/soc-generator/sims/vcs/generated-src/chipyard.harness.TestHarness.TapeoutConfig/gen-collateral/chipyard.harness.TestHarness.TapeoutConfig.top.mems.v \
+  --rtl-filelist /data1/GB/chipyard-main/soc-generator/sims/vcs/generated-src/chipyard.harness.TestHarness.TapeoutConfig/chipyard.harness.TestHarness.TapeoutConfig.top.f \
+  --netlist 2-SYN/outputs/<run-id>/ChipTop.v \
+  --svf 2-SYN/outputs/<run-id>/ChipTop.svf \
+  --run-id chiptop_latest_svf
+```
+
+若自定义设计还需要额外宏库，可通过 `--link-library "/path/macro1.db /path/macro2.db"`
+补充。
+
+默认 `--fail-limit 20` 用于快速定位前 20 个失败点；达到上限后其余 compare
+points 会显示为 `Unverified`，不代表它们已经失败。若要继续检查全部点，可使用：
+
+```bash
+(cd FM && ./run_fm ... --fail-limit 0 --timeout 36:0:0)
+```
+
+`--fail-limit 0` 可能显著增加运行时间；`--timeout H:M:S` 控制 `match/verify` 的墙钟上限。
+
+日志写入 `FM/logs/<run-id>.log`，匹配、验证、失败点和未比较点诊断报告写入
+`FM/rpt/<run-id>/`。其中 `potentially_constant_registers.rpt`、
+`init_toggle_objects.rpt` 和 `unmatched_points.rpt` 分别对应
+`report_potentially_constant_registers`、`report_init_toggle_objects` 和
+`report_unmatched_points -point_type all`。可用 `--run-id` 固定目录名；脚本会在输入文件、
+工艺库或 Formality 不可用时提前失败，并传播 Formality 的退出码。
 
 ## 11. `oh2bin` PPA 基准
 

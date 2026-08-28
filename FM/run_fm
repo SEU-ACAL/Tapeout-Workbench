@@ -1,20 +1,44 @@
-#! /bin/sh
-log_date=$(date +%m%d)_$(date +%H%M)
-
-if [ ! -d "rpt" ];then
-	mkdir rpt
+#!/bin/sh
+set -eu
+fm_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_dir=$(CDPATH= cd -- "$fm_dir/.." && pwd)
+usage() { echo 'Usage: ./run_fm [--tech tsmc28|smic180] [--target-db file] [--top module] [--rtl file] [--rtl-filelist file] [--netlist file] [--svf file] [--link-library files] [--fail-limit N] [--timeout H:M:S] [--run-id name]'; }
+abs_path() { case "$1" in /*) printf '%s\n' "$1";; *) printf '%s/%s\n' "$repo_dir" "$1";; esac; }
+require_value() { [ "$#" -ge 2 ] && [ -n "$2" ] || { echo "Option $1 requires a value" >&2; exit 2; }; }
+tech=tsmc28; target_db=; link_library=; top=multiplier_pipe3; rtl=0-RTL/multi.v; rtl_filelist=; netlist=2-SYN/outputs/0715_0544/multiplier_pipe3.v; svf=; fail_limit=20; timeout_limit=36:0:0; run_id=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --tech) require_value "$@"; tech=$2; shift 2;;
+        --target-db) require_value "$@"; target_db=$2; shift 2;;
+        --link-library) require_value "$@"; link_library=$2; shift 2;;
+        --fail-limit) require_value "$@"; fail_limit=$2; shift 2;;
+        --timeout) require_value "$@"; timeout_limit=$2; shift 2;;
+        --top) require_value "$@"; top=$2; shift 2;;
+        --rtl) require_value "$@"; rtl=$2; shift 2;;
+        --rtl-filelist) require_value "$@"; rtl_filelist=$2; shift 2;;
+        --netlist) require_value "$@"; netlist=$2; shift 2;;
+        --svf) require_value "$@"; svf=$2; shift 2;;
+        --run-id) require_value "$@"; run_id=$2; shift 2;;
+        -h|--help) usage; exit 0;;
+        *) echo "Unknown option: $1" >&2; usage >&2; exit 2;;
+    esac
+done
+if [ -z "$target_db" ]; then
+    case "$tech" in
+        tsmc28) target_db=/data2/TSMC28/logic/tcbn28hpcplusbwp7t40p140lvt_180b/AN61001_20180509/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpcplusbwp7t40p140lvt_180a/tcbn28hpcplusbwp7t40p140lvtssg0p81v0p9v125c_ccs.db;;
+        smic180) target_db=/data2/smic180/SCC018UG_UHD_RVT_V0.4a/SCC018UG_UHD_RVT_V0p4a/liberty/1.8v/scc018ug_uhd_rvt_ss_v1p62_125c_ccs.db;;
+        *) echo "Unsupported technology: $tech; use --target-db" >&2; exit 2;;
+    esac
 fi
-
-if [ ! -d "logs" ];then
-	mkdir logs
-fi
-
-if [ ! -d "outputs" ];then
-	mkdir outputs
-fi
-
-mkdir ./outputs/${log_date}
-mkdir ./rpt/${log_date}
-
-
-fm_shell -f ./scripts/fm.tcl -x "set run_date ${log_date}" | tee ./logs/${log_date}.log	
+rtl=$(abs_path "$rtl"); netlist=$(abs_path "$netlist"); target_db=$(abs_path "$target_db"); [ -z "$rtl_filelist" ] || rtl_filelist=$(abs_path "$rtl_filelist"); [ -z "$svf" ] || svf=$(abs_path "$svf")
+for required in "$rtl" "$netlist" "$target_db"; do [ -f "$required" ] || { echo "Missing FM input: $required" >&2; exit 1; }; done
+[ -z "$rtl_filelist" ] || [ -f "$rtl_filelist" ] || { echo "Missing RTL filelist: $rtl_filelist" >&2; exit 1; }
+[ -z "$svf" ] || [ -f "$svf" ] || { echo "Missing SVF: $svf" >&2; exit 1; }
+command -v fm_shell >/dev/null 2>&1 || { echo 'fm_shell not found in PATH' >&2; exit 1; }
+[ -n "$run_id" ] || run_id=$(date +%Y%m%d_%H%M%S)_$$
+case "$run_id" in *[!A-Za-z0-9_.-]*) echo "Invalid run id: $run_id" >&2; exit 2;; esac
+run_dir=$fm_dir/outputs/$run_id; report_dir=$fm_dir/rpt/$run_id; mkdir -p "$run_dir" "$report_dir" "$fm_dir/logs"; log_file=$fm_dir/logs/$run_id.log
+export FM_TOP=$top FM_RTL=$rtl FM_RTL_FILELIST=$rtl_filelist FM_NETLIST=$netlist FM_SVF=$svf FM_TARGET_LIBRARY=$target_db FM_TECH=$tech FM_LINK_LIBRARY=$link_library FM_FAIL_LIMIT=$fail_limit FM_TIMEOUT_LIMIT=$timeout_limit FM_REPORT_DIR=$report_dir FM_OUTPUT_DIR=$run_dir FM_REPO_DIR=$repo_dir
+echo "[FM] tech=$tech top=$top run=$run_id"
+set +e; (cd "$fm_dir" && fm_shell -f scripts/fm.tcl >"$log_file" 2>&1); rc=$?; set -e
+cat "$log_file"; echo "[FM] log=$log_file"; exit "$rc"
