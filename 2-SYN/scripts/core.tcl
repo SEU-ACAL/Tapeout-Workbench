@@ -33,7 +33,7 @@ set auto_insert_level_shifters true
 set hdlin_ff_always_sync_set_reset true
 set hdlin_verilog_defines [list "SYNTHESIS"]
 if {![info exists HDL_FILELIST]} {
-    set HDL_FILELIST $SOURCE_CODE_HOME/chipyard.harness.TestHarness.TapeoutConfig.top.f
+    set HDL_FILELIST [file join $SOURCE_CODE_HOME ${CONFIG}.top.f]
 }
 if {![file exists $HDL_FILELIST]} {
     error "Missing HDL filelist: $HDL_FILELIST"

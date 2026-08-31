@@ -7,6 +7,8 @@ Usage: ./run_core [options]
 Options:
   --source-code-home <dir>  Set SOURCE_CODE_HOME for the synthesis Tcl flow.
   --filelist <file>         Set HDL_FILELIST for the synthesis Tcl flow.
+  --config <name>           Set the generated Chipyard configuration name.
+  --generated-src-root <dir> Set the generated-src parent directory.
   --top <module>            Set TOP_MODULE for the synthesis Tcl flow.
   --sram-wrapper <file>     Optionally set SRAM_WRAPPER_FILE.
   --tech <name>             Select technology configuration (default: tsmc28).
@@ -39,6 +41,16 @@ while [ "$#" -gt 0 ]; do
         --filelist)
             require_value "$@"
             HDL_FILELIST=$2
+            shift 2
+            ;;
+        --config)
+            require_value "$@"
+            CONFIG=$2
+            shift 2
+            ;;
+        --generated-src-root)
+            require_value "$@"
+            CHIPYARD_GENERATED_SRC=$2
             shift 2
             ;;
         --top)
@@ -88,7 +100,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-for variable in SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CLOCK_PERIOD RUN_ID; do
+for variable in CONFIG CHIPYARD_GENERATED_SRC SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CLOCK_PERIOD RUN_ID; do
     eval "value=\${$variable-}"
     if [ -n "$value" ]; then
         escaped_value=$(tcl_escape "$value")

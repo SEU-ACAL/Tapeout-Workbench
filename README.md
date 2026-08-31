@@ -96,6 +96,20 @@ cd /data1/GB/ic_workbench/2-SYN
   --sram-wrapper /path/to/top.mems.v
 ```
 
+也可以只指定生成配置名和 `generated-src` 根目录；filelist 与 SRAM wrapper
+文件名会按配置名自动推导（默认仍为 `TapeoutConfig`）：
+
+```bash
+cd /data1/GB/ic_workbench/2-SYN
+./run_core \
+  --config chipyard.harness.TestHarness.RocketConfig \
+  --generated-src-root /path/to/soc-generator/sims/vcs/generated-src \
+  --top ChipTop --run-id rocket-config-01
+```
+
+如果使用了非标准文件名，仍可用 `--source-code-home`、`--filelist` 或
+`--sram-wrapper` 显式覆盖自动推导值。
+
 常用产物为 `ChipTop.v`、`ChipTop.sdc`、`ChipTop.sdf`、`ChipTop.ddc`、
 `ChipTop.svf` 和 `link_library.txt`。其中 `ChipTop.svf` 是本次综合对应的
 Formality 指导文件，必须与同一目录下的综合网表配套使用。`--tech smic180` 时，标准单元、SRAM、ROM 和 IO 库路径
@@ -149,6 +163,22 @@ make -C 3-Pre_PR_NETSIM ci_jtag_sdf TECH=smic180 NETLIST_RUN=<run-name>
 
 `WAVEFORM=1` 时生成 `3-Pre_PR_NETSIM/gen/<config>/<run>/run-zero.fsdb` 或
 `run-sdf.fsdb`，不会自动生成 VCD/VPD/SAIF。
+
+旧版 JTAG 复现脚本也不再要求修改脚本源码。它们默认使用原来的
+`TapeoutConfig/0812_0828`，也可以通过环境变量覆盖：
+
+```bash
+CONFIG=chipyard.harness.TestHarness.RocketConfig \
+NETLIST_RUN=rocket-config-01 \
+WORKBENCH_ROOT=/path/to/ic_workbench \
+CHIPYARD_ROOT=/path/to/chipyard \
+JTAG_ELF=/path/to/test.elf \
+OPENOCD=/path/to/openocd \
+./3-Pre_PR_NETSIM/scripts/run_jtag_sba64_min.sh /path/to/run-dir
+```
+
+如需完全指定仿真器目录，可直接设置 `SIM_DIR`；`JTAG_SIMV_NAME`、
+`DRAMSIM_INI_DIR`、`VERDI_HOME` 和 `VCS_HOME` 也支持覆盖。
 
 ## 6. STA 和功耗：`4-Pre_PR_STA_POWER`
 

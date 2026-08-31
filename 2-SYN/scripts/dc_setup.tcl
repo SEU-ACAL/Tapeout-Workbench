@@ -6,7 +6,16 @@ set compile_seqmap_identify_shift_registers false
 set compile_seqmap_identify_shift_registers_with_synchronous_logic false
 set timing_enable_multiple_clocks_per_reg true
 if {![info exists SOURCE_CODE_HOME]} {
-    set SOURCE_CODE_HOME /data1/GB/chipyard/soc-generator/sims/vcs/generated-src/chipyard.harness.TestHarness.TapeoutConfig
+    if {![info exists CONFIG]} {
+        set CONFIG chipyard.harness.TestHarness.TapeoutConfig
+    }
+    if {![info exists CHIPYARD_GENERATED_SRC]} {
+        set CHIPYARD_GENERATED_SRC /data1/GB/chipyard/soc-generator/sims/vcs/generated-src
+    }
+    set SOURCE_CODE_HOME [file join $CHIPYARD_GENERATED_SRC $CONFIG]
+}
+if {![info exists CONFIG]} {
+    set CONFIG [file tail [file normalize $SOURCE_CODE_HOME]]
 }
 
 
@@ -20,7 +29,7 @@ if {![file exists $tech_setup]} {
 source $tech_setup
 puts "Synthesis technology: $TECH_CONFIG, standard-cell corner: $TECH_CORNER, SRAM corner: $SRAM_CORNER"
 if {![info exists SRAM_WRAPPER_FILE]} {
-    set default_sram_wrapper $SOURCE_CODE_HOME/gen-collateral/chipyard.harness.TestHarness.TapeoutConfig.top.mems.v
+    set default_sram_wrapper [file join $SOURCE_CODE_HOME gen-collateral ${CONFIG}.top.mems.v]
     if {[file exists $default_sram_wrapper]} {
         set SRAM_WRAPPER_FILE $default_sram_wrapper
     }

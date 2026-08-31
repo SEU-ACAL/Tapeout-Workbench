@@ -58,3 +58,8 @@ make -C 3-Pre_PR_NETSIM run_sdf TECH=smic180 NETLIST_RUN=0731_0611 WAVEFORM=1 \
 `WAVEFORM=1` produces only an FSDB under `gen/<config>/<netlist-run>/`; do not
 pass `+vcdfile` or `+vcdplusfile`. The waveform build is separate from the
 default build, so FSDB debug options are never enabled implicitly.
+
+The legacy JTAG reproduction scripts accept `CONFIG`, `NETLIST_RUN`,
+`WORKBENCH_ROOT`, `SIM_DIR`, `CHIPYARD_ROOT`, `JTAG_ELF`, `DRAMSIM_INI_DIR`,
+`OPENOCD`, and `JTAG_WRAPPER` as environment overrides. Their defaults retain
+the historical `TapeoutConfig/0812_0828` simulator location.
