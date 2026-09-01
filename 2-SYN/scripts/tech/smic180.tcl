@@ -14,6 +14,8 @@ set io_link_library [list \
     /data2/smic180/SP018RP_V1p0b/syn/1p8v/SP018RP_V1p0_max.db]
 set sram_link_library [list \
     $SRAM_ROOT/chipyard_sram_32x22/chipyard_sram_32x22_$SRAM_CORNER.db \
+    $SRAM_ROOT/chipyard_sram_32x128/chipyard_sram_32x128_$SRAM_CORNER.db \
+    $SRAM_ROOT/chipyard_sram_1024x8/chipyard_sram_1024x8_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x64/chipyard_sram_512x64_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x8/chipyard_sram_512x8_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_64x22/chipyard_sram_64x22_$SRAM_CORNER.db \
