@@ -31,7 +31,7 @@ set auto_insert_level_shifters_on_clocks      all
 set auto_insert_level_shifters true
 # Apply before analyze so clocked constant assignments retain their reset role.
 set hdlin_ff_always_sync_set_reset true
-set hdlin_verilog_defines [list "SYNTHESIS"]
+set hdlin_verilog_defines [list "SYNTHESIS" "BUCKYBALL_DISABLE_DPI"]
 if {![info exists HDL_FILELIST]} {
     set HDL_FILELIST [file join $SOURCE_CODE_HOME ${CONFIG}.top.f]
 }
@@ -52,9 +52,9 @@ if {[info exists SRAM_WRAPPER_FILE] && $SRAM_WRAPPER_FILE ne ""} {
     lappend ALL_HDL_FILES $SRAM_WRAPPER_FILE
 }
 
-set hdlin_verilog_defines [list "SYNTHESIS"]
+set hdlin_verilog_defines [list "SYNTHESIS" "BUCKYBALL_DISABLE_DPI"]
 
-analyze -format sverilog $ALL_HDL_FILES  -define DC_SYN
+analyze -format sverilog $ALL_HDL_FILES -define {DC_SYN BUCKYBALL_DISABLE_DPI}
 elaborate       $TOP_MODULE
 current_design  $TOP_MODULE
 link
