@@ -18,6 +18,12 @@
 # Directory root of the flow scripts, can be used with file join to normalize paths to flow files.
 set_flowkit_db init_flow_directory    [file dirname [file normalize [info script]]]
 
+# Exploratory runs report signoff violations as warnings by default. Set this
+# variable to 1 before sourcing run_flow.tcl to enforce a hard signoff gate.
+if {![info exists ::PR_SIGNOFF_STRICT]} {
+  set ::PR_SIGNOFF_STRICT 0
+}
+
 proc ::pr_read_report {path} {
   if {![file exists $path] || [file size $path] == 0} {
     error "Required signoff report is missing or empty: $path"
@@ -26,6 +32,15 @@ proc ::pr_read_report {path} {
   set text [read $report]
   close $report
   return $text
+}
+
+proc ::pr_signoff_failure {name message} {
+  if {[info exists ::PR_SIGNOFF_STRICT] && !$::PR_SIGNOFF_STRICT} {
+    set ::PR_SIGNOFF_CHECK_STATUS($name) warning
+    puts "**WARN: $message"
+    return 0
+  }
+  error $message
 }
 
 proc ::pr_timing_report_name {name} {
@@ -145,7 +160,7 @@ proc ::pr_write_grouped_timing_reports {report_dir check_type} {
 proc ::pr_gate_signoff_report {name path} {
   set text [::pr_read_report $path]
   if {[regexp -nocase {\mERROR\M} $text]} {
-    error "Signoff $name report contains ERROR: $path"
+    return [::pr_signoff_failure $name "Signoff $name report contains ERROR: $path"]
   }
 
   # Innovus uses report-specific prose for clean verification results.
@@ -167,7 +182,7 @@ proc ::pr_gate_signoff_report {name path} {
   }
 
   if {$count eq ""} {
-    error "Cannot determine $name signoff count from $path; delivery is blocked"
+    return [::pr_signoff_failure $name "Cannot determine $name signoff count from $path; delivery is blocked"]
   }
   if {$count == 0} {
     set ::PR_SIGNOFF_CHECK_STATUS($name) pass
@@ -179,17 +194,17 @@ proc ::pr_gate_signoff_report {name path} {
     puts "PR_SIGNOFF_CHECK name=$name status=waived count=$count waiver=[dict get $::PR_SIGNOFF_WAIVERS $name]"
     return
   }
-  error "Signoff $name has $count violation(s): $path"
+  return [::pr_signoff_failure $name "Signoff $name has $count violation(s): $path"]
 }
 
 proc ::pr_gate_clock_drv {path} {
   set text [::pr_read_report $path]
   if {[regexp -nocase {\|[^\n|]*\|[^\n|]*\|[^\n|]*\|\s*-[0-9.]+\s*\|} $text] || \
       [regexp -nocase {(^|\n)[^\n]*(max[_ ]?(fanout|transition|capacitance)|fanout|transition)[^\n]*\mVIOLATED\M} $text]} {
-    error "Unresolved clock fanout/DRV violation: $path"
+    return [::pr_signoff_failure clock_drv "Unresolved clock fanout/DRV violation: $path"]
   }
   if {[regexp -nocase {(disconnected|unrouted)[^\n]*(clock|net)|(clock|net)[^\n]*(disconnected|unrouted)} $text]} {
-    error "Disconnected or unrouted clock net: $path"
+    return [::pr_signoff_failure clock_drv "Disconnected or unrouted clock net: $path"]
   }
   set ::PR_SIGNOFF_CHECK_STATUS(clock_drv) pass
   puts "PR_SIGNOFF_CHECK name=clock_drv status=pass"
@@ -303,11 +318,17 @@ create_flow_step -name gate_final_signoff -owner design -exclude_time_metric {
 
   set design_check [::pr_read_report [file join $report_dir design.check.rpt]]
   if {[regexp -nocase {ERROR\s*:|(?:[1-9][0-9]*)\s+errors?\b|errors?\s*[:=]\s*[1-9]} $design_check]} {
-    error "Final design/connectivity check reported ERROR; see [file join $report_dir design.check.rpt]"
+    ::pr_signoff_failure final "Final design/connectivity check reported ERROR; see [file join $report_dir design.check.rpt]"
+  } else {
+    set ::PR_SIGNOFF_CHECK_STATUS(final) pass
   }
-  set ::PR_FINAL_SIGNOFF_STATUS pass
-  set ::PR_SIGNOFF_CHECK_STATUS(final) pass
-  puts "PR_SIGNOFF_CHECK name=final status=pass"
+  if {[info exists ::PR_SIGNOFF_STRICT] && !$::PR_SIGNOFF_STRICT} {
+    set ::PR_FINAL_SIGNOFF_STATUS warning
+    puts "PR_SIGNOFF_CHECK name=final status=warning_or_pass"
+  } else {
+    set ::PR_FINAL_SIGNOFF_STATUS pass
+    puts "PR_SIGNOFF_CHECK name=final status=pass"
+  }
 }
 
 proc ::pr_write_merged_gds {out_dir} {
@@ -356,7 +377,10 @@ proc ::pr_write_merged_gds {out_dir} {
 
 create_flow_step -name write_outputs -owner design -write_db {
   if {![info exists ::PR_FINAL_SIGNOFF_STATUS] || $::PR_FINAL_SIGNOFF_STATUS ne "pass"} {
-    error "Final outputs are blocked until all signoff checks pass"
+    if {![info exists ::PR_SIGNOFF_STRICT] || $::PR_SIGNOFF_STRICT} {
+      error "Final outputs are blocked until all signoff checks pass"
+    }
+    puts "**WARN: Writing outputs despite non-clean final signoff status: $::PR_FINAL_SIGNOFF_STATUS"
   }
   set out_dir $::PR_OUTPUT_DIR
   file mkdir $out_dir

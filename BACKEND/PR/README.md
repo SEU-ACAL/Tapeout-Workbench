@@ -15,7 +15,7 @@ runs/<run_name>/         每次运行的数据库、日志和中间文件
 reports/final/           最终报告
 reports/final/timing/    按 setup/hold、view、path group 分层的时序报告
 reports/final/timing_debug/  Innovus timeDesign 的详细压缩报告
-outputs/                 通过 gate 后生成的网表、DEF、SPEF、merged GDSII 和 manifest
+outputs/                 由 write_outputs 生成的网表、DEF、SPEF、merged GDSII 和 manifest
 ```
 
 ## 2. 环境和工具检查
@@ -67,7 +67,8 @@ innovus -no_gui -log /tmp/icwb_pr.log \
 floorplan -> prects -> cts -> postcts -> route -> postroute
 ```
 
-完整流程结束后会执行 `run_final_reports`、`gate_final_signoff` 和 `write_outputs`。只有 gate 通过，才会写入 `outputs/`。
+完整流程结束后会执行 `run_final_reports`、`gate_final_signoff` 和 `write_outputs`。默认 warning 模式下即使
+signoff 有违规也会写入 `outputs/`；正式交付前应显式开启严格门禁。
 
 ## 4. MMMC 配置
 
@@ -169,9 +170,10 @@ outputs/<technology>/gds2.map
 outputs/<technology>/manifest.txt
 ```
 
-`write_outputs` 在 final signoff gate 通过后，使用当前 Innovus 数据库导出
-merged GDSII，并将工艺配置指定的 GDS 合并到 `outputs/<technology>/<top>.gds`。因此 GDS 与门级
-Verilog 均来自同一次最终 P&R 发布，可直接作为后续 DRC/LVS 输入。
+默认情况下，signoff gate 以 warning 模式运行，`write_outputs` 仍会导出当前 Innovus 数据库的
+merged GDSII、门级 Verilog 等结果；这些结果不应视为 signoff 交付物。需要硬门禁时，在 source
+`scripts/run_flow.tcl` 前显式设置 `set ::PR_SIGNOFF_STRICT 1`，此时任一 signoff 违规都会阻止输出。
+无论门禁模式如何，都应检查最终报告，并将非 clean run 与正式 signoff 结果分开保存。
 
 同时检查最终报告：
 
