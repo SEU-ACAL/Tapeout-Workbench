@@ -13,7 +13,7 @@ set ::TECH_LEF /data2/smic180/SCC018UG_UHD_RVT_V0p4a/lef/tf/180MS_1850/scc018u_6
 set ::CELL_LEF /data2/smic180/SCC018UG_UHD_RVT_V0p4a/lef/macro/scc018ug_uhd_rvt.lef
 set ::IO_LEF /data2/smic180/SP018RP_V1p0b/lef/SP018RP_V1p0_6MT.lef
 set ::SRAM_ROOT /data2/smic180/SRAM/S018SP_v0p1pc_CDK/SMIC180_S018SP_v0p1c_20260722
-set ::PR_SRAM_NAMES {chipyard_sram_32x22 chipyard_sram_32x128 chipyard_sram_1024x8 chipyard_sram_512x64 chipyard_sram_512x8 chipyard_sram_64x22 chipyard_sram_64x21 chipyard_sram_512x32}
+set ::PR_SRAM_NAMES {chipyard_sram_32x22 chipyard_sram_32x128 chipyard_sram_1024x8 chipyard_sram_512x64 chipyard_sram_512x8 chipyard_sram_64x8 chipyard_sram_64x22 chipyard_sram_64x21 chipyard_sram_512x32}
 set ::PR_SRAM_LEFS {}
 set ::PR_SRAM_GDS_FILES {}
 set ::PR_SRAM_LIB_SS {}
