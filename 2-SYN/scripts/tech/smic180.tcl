@@ -18,7 +18,7 @@ set sram_link_library [list \
     $SRAM_ROOT/chipyard_sram_1024x8/chipyard_sram_1024x8_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x64/chipyard_sram_512x64_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x8/chipyard_sram_512x8_$SRAM_CORNER.db \
-    $SRAM_ROOT/chipyard_sram_64x8/chipyard_sram_64x8_$SRAM_CORNER.db \
+    $SRAM_ROOT/chipyard_sram_64x128/chipyard_sram_64x128_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_64x22/chipyard_sram_64x22_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_64x21/chipyard_sram_64x21_$SRAM_CORNER.db \
     $SRAM_ROOT/chipyard_sram_512x32/chipyard_sram_512x32_$SRAM_CORNER.db]
