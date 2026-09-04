@@ -30,7 +30,9 @@ set_clock_uncertainty -hold [expr {0.05 * $pr_clock_period}] [get_clocks clock]
 
 set pr_jtag_period [lindex [get_property [get_clocks jtag_tck] period] 0]
 set_clock_uncertainty -setup [expr {0.10 * $pr_jtag_period}] [get_clocks jtag_tck]
-set_clock_uncertainty -hold [expr {0.05 * $pr_jtag_period}] [get_clocks jtag_tck]
+# JTAG's 100 ns period must not inflate the local hold jitter budget to 5 ns.
+# Use the same absolute 0.2 ns implementation hold budget as the base SDC.
+set_clock_uncertainty -hold 0.2 [get_clocks jtag_tck]
 
 set pr_serial_period [lindex [get_property [get_clocks serial_tl_clk] period] 0]
 set_clock_uncertainty -setup [expr {0.10 * $pr_serial_period}] [get_clocks serial_tl_clk]
