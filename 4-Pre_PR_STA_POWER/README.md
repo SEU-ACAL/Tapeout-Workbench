@@ -16,8 +16,17 @@ make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=0731_0611
 make -C 4-Pre_PR_STA_POWER power TECH=smic180 NETLIST_RUN=<smic180-run>
 ```
 
-The SMIC180 configuration uses voltage-consistent standard-cell, S018SP SRAM,
-and S018VM BootROM/DebugROM `SS 1.62V/125C` views.
+Use `CORNER=ss`, `CORNER=tt`, or `CORNER=ff` to select the characterized PVT
+corner. The selected corner must match the netlist/SDF/FSDB generation run.
+
+```sh
+make -C 4-Pre_PR_STA_POWER power TECH=smic180 CORNER=tt \
+  NETLIST_RUN=<smic180-tt-run>
+```
+
+The SMIC180 configuration selects voltage-consistent standard-cell, S018SP SRAM,
+and S018VM BootROM/DebugROM views for the requested corner; `ss` defaults to
+`1.62V/125C`.
 
 Technology configuration files set `STD_CELL_DB`, `SRAM_ROOT`, `SRAM_CORNER`,
 `ROM_ROOT`, `ROM_CORNER`, and the SRAM/ROM DB layouts. All remain overridable from the command line for a
@@ -67,7 +76,7 @@ make -C 4-Pre_PR_STA_POWER power NETLIST_RUN=0731_0611 \
   FSDB=/path/to/run-sdf.fsdb POWER_START_NS=2000
 ```
 
-Reports are written under `outputs/<technology>/<netlist-run>/sdf-fsdb/`:
+Reports are written under `outputs/<technology>/<netlist-run>/<corner>/sdf-fsdb/`:
 
 - `power_total.rpt`: total internal, switching, leakage, and total power
 - `power_hierarchy.rpt`: hierarchy breakdown

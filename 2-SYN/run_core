@@ -12,6 +12,7 @@ Options:
   --top <module>            Set TOP_MODULE for the synthesis Tcl flow.
   --sram-wrapper <file>     Optionally set SRAM_WRAPPER_FILE.
   --tech <name>             Select technology configuration (default: tsmc28).
+  --corner <name>           Select PVT corner (ss, tt, or ff; default: ss).
   --clock-period <ns>       Set the primary clock period in nanoseconds (default: 10.0).
   --run-id <name>           Write outputs and reports to the specified run directory.
   -h, --help                Show this help message.
@@ -31,6 +32,7 @@ require_value() {
 }
 
 dc_command=""
+CORNER=${CORNER:-ss}
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --source-code-home)
@@ -68,6 +70,17 @@ while [ "$#" -gt 0 ]; do
             TECH_CONFIG=$2
             shift 2
             ;;
+        --corner)
+            require_value "$@"
+            case "$2" in
+                ss|tt|ff) CORNER=$2 ;;
+                *)
+                    echo "Corner must be one of: ss, tt, ff (got $2)" >&2
+                    exit 1
+                    ;;
+            esac
+            shift 2
+            ;;
         --clock-period)
             require_value "$@"
             case "$2" in
@@ -100,7 +113,15 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-for variable in CONFIG CHIPYARD_GENERATED_SRC SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CLOCK_PERIOD RUN_ID; do
+case "$CORNER" in
+    ss|tt|ff) ;;
+    *)
+        echo "Corner must be one of: ss, tt, ff (got $CORNER)" >&2
+        exit 1
+        ;;
+esac
+
+for variable in CONFIG CHIPYARD_GENERATED_SRC SOURCE_CODE_HOME HDL_FILELIST TOP_MODULE SRAM_WRAPPER_FILE TECH_CONFIG CORNER CLOCK_PERIOD RUN_ID; do
     eval "value=\${$variable-}"
     if [ -n "$value" ]; then
         escaped_value=$(tcl_escape "$value")

@@ -5,17 +5,7 @@ proc require_env {name} {
     return $::env($name)
 }
 
-proc chiptop_sram_link_library {sram_root sram_corner sram_db_template} {
-    set sram_names [list \
-        chipyard_sram_32x22 \
-        chipyard_sram_32x128 \
-        chipyard_sram_1024x8 \
-        chipyard_sram_512x64 \
-        chipyard_sram_512x8 \
-        chipyard_sram_64x128 \
-        chipyard_sram_64x22 \
-        chipyard_sram_64x21 \
-        chipyard_sram_512x32]
+proc chiptop_sram_link_library {sram_root sram_corner sram_db_template sram_names} {
     set libraries [list]
     foreach sram_name $sram_names {
         set relative_db [format $sram_db_template $sram_name $sram_corner]
@@ -34,7 +24,11 @@ proc chiptop_rom_link_library {rom_root rom_corner rom_db_template} {
     set libraries [list]
     foreach rom_name $rom_names {
         set relative_db [format $rom_db_template $rom_name $rom_corner]
-        lappend libraries [file join $rom_root $relative_db]
+        set subdir debugrom
+        if {[string match *X64* $rom_name]} { set subdir bootrom }
+        set candidate [file join $rom_root $subdir $relative_db]
+        if {![file exists $candidate]} { set candidate [file join $rom_root $relative_db] }
+        lappend libraries $candidate
     }
     return $libraries
 }

@@ -93,8 +93,13 @@ cd /data1/GB/ic_workbench/2-SYN
   --clock-period 2.0 \
   --run-id chiptop_smic180_0816 \
   --tech smic180 \
+  --corner ss \
   --sram-wrapper /path/to/top.mems.v
 ```
+
+`--corner` 支持 `ss`、`tt`、`ff`，默认是 `ss`。每个 corner 都必须使用对应
+工艺库重新综合，并使用同一 run 的 SDF/FSDB 做后续分析；若某个 SRAM/ROM
+宏缺少该 corner，综合会在库检查阶段报错。
 
 也可以只指定生成配置名和 `generated-src` 根目录；filelist 与 SRAM wrapper
 文件名会按配置名自动推导（默认仍为 `TapeoutConfig`）：
@@ -193,14 +198,14 @@ make -C 4-Pre_PR_STA_POWER sdf TECH=smic180 NETLIST_RUN=<run-name>
 
 ```bash
 make -C 4-Pre_PR_STA_POWER power \
-  TECH=smic180 NETLIST_RUN=<run-name>
+  TECH=smic180 CORNER=ss NETLIST_RUN=<run-name>
 ```
 
 一条命令完成 SDF 检查、SDF 门级仿真和功耗报告：
 
 ```bash
 make -C 4-Pre_PR_STA_POWER sdf_power \
-  TECH=smic180 NETLIST_RUN=<run-name> \
+  TECH=smic180 CORNER=ss NETLIST_RUN=<run-name> \
   BINARY="$TAPE_ENV/applications/tests/build/hello.riscv"
 ```
 
@@ -213,7 +218,7 @@ PT_SHELL=/path/to/pt_shell make -C 4-Pre_PR_STA_POWER power \
   SRAM_CORNER=<corner> FSDB=/path/to/run-sdf.fsdb POWER_START_NS=2000
 ```
 
-报告目录为 `4-Pre_PR_STA_POWER/outputs/<tech>/<run>/sdf-fsdb/`。
+报告目录为 `4-Pre_PR_STA_POWER/outputs/<tech>/<run>/<corner>/sdf-fsdb/`。
 
 ## 7. Innovus P&R：`BACKEND/PR`
 

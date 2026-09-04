@@ -27,7 +27,7 @@ if {![file exists $tech_setup]} {
     error "Missing technology configuration: $tech_setup"
 }
 source $tech_setup
-puts "Synthesis technology: $TECH_CONFIG, standard-cell corner: $TECH_CORNER, SRAM corner: $SRAM_CORNER"
+puts "Synthesis technology: $TECH_CONFIG, corner: $CORNER, standard-cell corner: $TECH_CORNER, SRAM corner: $SRAM_CORNER"
 if {![info exists SRAM_WRAPPER_FILE]} {
     set default_sram_wrapper [file join $SOURCE_CODE_HOME gen-collateral ${CONFIG}.top.mems.v]
     if {[file exists $default_sram_wrapper]} {
@@ -74,6 +74,11 @@ if {![info exists rom_link_library]} {
     set rom_link_library [list]
 }
 
+foreach library_db [concat $target_library $io_link_library $sram_link_library $rom_link_library] {
+    if {![file exists $library_db]} {
+        error "Missing timing library for $TECH_CONFIG/$CORNER: $library_db"
+    }
+}
 foreach memory_db [concat $sram_link_library $rom_link_library] {
     if {![file exists $memory_db]} {
         error "Missing memory timing library: $memory_db"

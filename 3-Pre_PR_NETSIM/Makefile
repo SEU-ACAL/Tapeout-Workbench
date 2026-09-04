@@ -111,8 +111,8 @@ endif
 help:
 	@printf '%s\n' \
 	  'Run from the Chipyard Nix development shell so RISCV and VCS are exported.' \
-	  'make gls_zero [TECH=smic180|tsmc28] [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
-	  'make gls_sdf [TECH=smic180|tsmc28] SDF=<path>             Build gate-level simulation with SDF.' \
+	  'make gls_zero [TECH=smic180|tsmc28] [CORNER=ss|tt|ff] [NETLIST_RUN=<run>]  Build no-SDF gate-level simulation.' \
+	  'make gls_sdf [TECH=smic180|tsmc28] [CORNER=ss|tt|ff] SDF=<path>             Build gate-level simulation with SDF.' \
 	  'make run_zero BINARY=<elf>          Run no-SDF gate-level simulation.' \
 	  'make run_sdf SDF=<path> BINARY=<elf> Run SDF gate-level simulation.' \
 	  'SDF defaults to the DC-generated outputs/<run>/ChipTop.sdf; run DC first with --run-id <run>.' \

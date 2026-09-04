@@ -19,12 +19,14 @@ make -C 3-Pre_PR_NETSIM run_zero TECH=smic180 NETLIST_RUN=0731_0611 \
 
 `TECH` selects the standard-cell, SRAM, and (for SMIC180) ROM Verilog models. Supported values are
 `smic180` (the default for `0731_0611`) and `tsmc28`. The SMIC180 flow uses the SCC018UG UHD
-RVT model, the SMIC SRAM models, and the `S018VM` BootROM/DebugROM models at the
-`ss_1.62_125` corner:
+RVT model, the SMIC SRAM models, and the `S018VM` BootROM/DebugROM models.
+The GLS flow accepts the same `CORNER=ss|tt|ff` selector as synthesis and power.
+For SMIC180, the SRAM model corner is selected automatically (`ss_1.62_125`,
+`tt_1.8_25`, or `ff_1.98_-40`):
 
 ```sh
-make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 NETLIST_RUN=<smic180-run>
-make -C 3-Pre_PR_NETSIM run_zero TECH=smic180 NETLIST_RUN=<smic180-run> \
+make -C 3-Pre_PR_NETSIM gls_zero TECH=smic180 CORNER=ss NETLIST_RUN=<smic180-run>
+make -C 3-Pre_PR_NETSIM run_zero TECH=smic180 CORNER=ss NETLIST_RUN=<smic180-run> \
   BINARY=$TAPE_ENV/applications/tests/build/hello.riscv
 ```
 
