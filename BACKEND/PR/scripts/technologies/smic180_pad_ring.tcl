@@ -1,13 +1,13 @@
-# Preliminary automatic SP018RP pad ring for implementation bring-up.
-# A package-qualified pad order may replace this script through FLOORPLAN_DEF.
+# Automatic SP018RP pad ring fallback.  A package-qualified pad order may
+# replace this script through FLOORPLAN_DEF or the smic180.io file.
 set pr_signal_pads {}
 foreach pad_cell $::PR_SIGNAL_PAD_CELLS {
   foreach inst [dbGet -p2 top.insts.cell.name $pad_cell] {
     lappend pr_signal_pads [dbGet $inst.name]
   }
 }
-if {[llength $pr_signal_pads] != 28} {
-  error "Expected 28 SP018RP signal pads, found [llength $pr_signal_pads]: $pr_signal_pads"
+if {[llength $pr_signal_pads] != $::PR_SIGNAL_PAD_EXPECTED_COUNT} {
+  error "Expected $::PR_SIGNAL_PAD_EXPECTED_COUNT SP018RP signal pads, found [llength $pr_signal_pads]: $pr_signal_pads"
 }
 
 set pr_xll [dbGet top.fPlan.box_llx]
@@ -22,6 +22,20 @@ set pr_side_specs [list \
   [list top    R180 $pr_xur [expr {$pr_yur - $pr_pad_depth}] $pr_xll [expr {$pr_yur - $pr_pad_depth}]] \
   [list left   R270 $pr_xll $pr_yur $pr_xll $pr_yll]]
 
+set pr_existing_inst_names [dbGet top.insts.name]
+foreach pr_corner_spec [list \
+  [list PR_CORNER_SW $pr_xll $pr_yll R0] \
+  [list PR_CORNER_SE $pr_xur $pr_yll R90] \
+  [list PR_CORNER_NE $pr_xur $pr_yur R180] \
+  [list PR_CORNER_NW $pr_xll $pr_yur R270]] {
+  lassign $pr_corner_spec pr_corner_inst pr_corner_x pr_corner_y pr_corner_orient
+  if {[lsearch -exact $pr_existing_inst_names $pr_corner_inst] >= 0} {
+    error "Corner instance already exists: $pr_corner_inst"
+  }
+  addInst -cell $::PR_CORNER_CELL -inst $pr_corner_inst
+  placeInstance $pr_corner_inst $pr_corner_x $pr_corner_y $pr_corner_orient -fixed
+}
+
 set pr_signal_index 0
 set pr_supply_index 0
 foreach side_spec $pr_side_specs {
@@ -29,8 +43,11 @@ foreach side_spec $pr_side_specs {
   set pr_side_pads [lrange $pr_signal_pads $pr_signal_index [expr {$pr_signal_index + 6}]]
   incr pr_signal_index 7
 
-  foreach power_cell $::PR_POWER_PAD_CELLS {
+  foreach power_cell [concat $::PR_POWER_PAD_CELLS $::PR_RING_CONTINUITY_PAD_CELLS] {
     set power_inst PR_${power_cell}_${side}
+    if {[lsearch -exact $pr_existing_inst_names $power_inst] >= 0} {
+      error "Pad-ring instance already exists: $power_inst"
+    }
     addInst -cell $power_cell -inst $power_inst
     lappend pr_side_pads $power_inst
   }
@@ -49,4 +66,4 @@ foreach side_spec $pr_side_specs {
     placeInstance $inst $x $y $orient -fixed
   }
 }
-puts "PR_PAD_RING mode=automatic signal_pads=[llength $pr_signal_pads] power_pads=[expr {[llength $::PR_POWER_PAD_CELLS] * 4}]"
+puts "PR_PAD_RING mode=automatic signal_pads=[llength $pr_signal_pads] power_pads=[expr {[llength $::PR_POWER_PAD_CELLS] * 4}] continuity_pads=[expr {[llength $::PR_RING_CONTINUITY_PAD_CELLS] * 4}]"

@@ -17,4 +17,5 @@ if {$::PR_WELL_TAP_CELL ne ""} {
 addStripe -nets {VDD VSS} -layer $::PR_PG_RING_VERTICAL -direction vertical \
   -width $::PR_PG_STRIPE_WIDTH -spacing $::PR_PG_STRIPE_SPACING \
   -set_to_set_distance $::PR_PG_STRIPE_PITCH
-sroute -connect corePin -nets {VDD VSS}
+# Connect the VDD/VSS pad pins to the core ring/stripes as well as core PG pins.
+sroute -connect {padPin corePin} -nets {VDD VSS}
