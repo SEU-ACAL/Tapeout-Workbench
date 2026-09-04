@@ -12,6 +12,7 @@ proc chiptop_sram_link_library {sram_root sram_corner sram_db_template} {
         chipyard_sram_1024x8 \
         chipyard_sram_512x64 \
         chipyard_sram_512x8 \
+        chipyard_sram_64x128 \
         chipyard_sram_64x22 \
         chipyard_sram_64x21 \
         chipyard_sram_512x32]
