@@ -18,6 +18,15 @@ if {![file isfile $pr_technology_file]} {
 }
 source $pr_technology_file
 
+# A technology may replace the generic PG recipe when its pad cells, macro
+# pins, or preferred routing layers require a foundry-specific topology.
+if {![info exists ::PR_POWER_PLAN_SCRIPT]} {
+  set ::PR_POWER_PLAN_SCRIPT [file join $::PR_ROOT scripts power_plan.tcl]
+}
+if {![file isfile $::PR_POWER_PLAN_SCRIPT]} {
+  error "Missing power-plan script for $::PR_TECHNOLOGY: $::PR_POWER_PLAN_SCRIPT"
+}
+
 # A pad-aware technology can receive its approved pad-ring DEF without editing
 # the technology file. The default remains empty for the TSMC core flow.
 if {[info exists ::env(PR_FLOORPLAN_DEF)] && $::env(PR_FLOORPLAN_DEF) ne ""} {

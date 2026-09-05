@@ -115,16 +115,33 @@ set ::CTS_TARGET_SLEW 1.0
 set ::CTS_MAX_FANOUT 32
 set ::PR_CTS_BUFFER_CELLS {CLKBUFUHDV1 CLKBUFUHDV2 CLKBUFUHDV3 CLKBUFUHDV4 CLKBUFUHDV6 CLKBUFUHDV8 CLKBUFUHDV16 CLKBUFUHDV20 CLKBUFUHDV24}
 set ::PR_CTS_INVERTER_CELLS {CLKINUHDV1 CLKINUHDV2 CLKINUHDV3 CLKINUHDV4 CLKINUHDV6 CLKINUHDV8 CLKINUHDV16 CLKINUHDV20 CLKINUHDV24}
+# Data-path hold repair must use ordinary delay buffers.  Clock cells are
+# reserved for CTS and must not be selected as generic hold-fix cells.
+set ::PR_DATA_HOLD_CELLS {BUFUHDV0P4 BUFUHDV0P7 BUFUHDV1 BUFUHDV2 BUFUHDV3 BUFUHDV4 BUFUHDV6 BUFUHDV8 BUFUHDV16 BUFUHDV20 BUFUHDV24}
 set ::PR_TIE_CELLS {}
 set ::PR_FILLER_CELLS {F_FILLUHD32 F_FILLUHD16 F_FILLUHD8 F_FILLUHD4 F_FILLUHD2 F_FILLUHD1}
 set ::PR_WELL_TAP_CELL ""
 set ::PR_WELL_TAP_INTERVAL 0
 set ::PR_POWER_PIN_MAP {{VDD VDD} {VDD VNW} {VSS VSS} {VSS VPW}}
-set ::PR_PG_RING_HORIZONTAL METAL6
-set ::PR_PG_RING_VERTICAL METAL5
+set ::PR_POWER_PLAN_SCRIPT [file join $::PR_ROOT scripts technologies smic180_power_plan.tcl]
+# SMIC180 preferred directions are M5 horizontal and M6 vertical.  Keep the
+# PG topology aligned with those directions so macro hookups can use M4->M5
+# vias instead of running long non-preferred wires.
+set ::PR_PG_RING_HORIZONTAL METAL5
+set ::PR_PG_RING_VERTICAL METAL6
+set ::PR_PG_STRIPE_HORIZONTAL METAL5
+set ::PR_PG_STRIPE_VERTICAL METAL6
 set ::PR_PG_RING_WIDTH 10
 set ::PR_PG_RING_SPACING 5
 set ::PR_PG_RING_OFFSET 5
-set ::PR_PG_STRIPE_WIDTH 5
-set ::PR_PG_STRIPE_SPACING 5
-set ::PR_PG_STRIPE_PITCH 100
+# PG dimensions are snapped to the SMIC180 routing grid.  M5 follows the
+# standard-cell row height; M6 follows its 0.90um routing pitch and the
+# 1.20um spacing rule for long wide wires.
+set ::PR_PG_STRIPE_WIDTH_M5 3.36
+set ::PR_PG_STRIPE_SPACING_M5 0.56
+set ::PR_PG_STRIPE_WIDTH_M6 5.40
+set ::PR_PG_STRIPE_SPACING_M6 1.20
+set ::PR_PG_STRIPE_PITCH 100.8
+# Keep the legacy names for generic reporting/scripts that still query them.
+set ::PR_PG_STRIPE_WIDTH $::PR_PG_STRIPE_WIDTH_M6
+set ::PR_PG_STRIPE_SPACING $::PR_PG_STRIPE_SPACING_M6

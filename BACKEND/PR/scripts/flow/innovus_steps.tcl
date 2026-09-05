@@ -185,8 +185,14 @@ create_flow_step -name run_route -owner cadence {
 # STEP run_opt_postroute
 ##############################################################################
 create_flow_step -name run_opt_postroute -owner cadence {
-  #- perform postroute and SI based setup optimization
-  optDesign -postRoute -setup -hold -outDir debug -prefix [get_flowkit_db flow_report_name]
+  #- Close setup first, then perform a dedicated final hold pass.  Running
+  # both checks in one optDesign invocation can let setup recovery shorten
+  # paths that were just repaired for hold.
+  set pr_opt_prefix [get_flowkit_db flow_report_name]
+  optDesign -postRoute -setup \
+    -outDir [file join debug postroute_setup] -prefix ${pr_opt_prefix}_setup
+  optDesign -postRoute -hold \
+    -outDir [file join debug postroute_hold] -prefix ${pr_opt_prefix}_hold
 }
 
 #=============================================================================

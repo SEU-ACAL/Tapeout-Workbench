@@ -57,6 +57,9 @@ if {[llength $::PR_TIE_CELLS] != 0} {
 # Optimization settings  [setOptMode -help]
 #-------------------------------------------------------------------------------
 setOptMode -addInstancePrefix                           "[get_flowkit_db flow_report_name]_"
+if {[info exists ::PR_DATA_HOLD_CELLS] && [llength $::PR_DATA_HOLD_CELLS] != 0} {
+  setOptMode -opt_hold_cells $::PR_DATA_HOLD_CELLS
+}
 
 # Clock settings  [set_ccopt_mode -help]
 #-------------------------------------------------------------------------------
@@ -76,3 +79,5 @@ if {[llength $::PR_FILLER_CELLS] != 0} {
 
 # Routing settings  [setNanoRouteMode -help]
 #-------------------------------------------------------------------------------
+setDesignMode -bottomRoutingLayer METAL1 \
+              -topRoutingLayer METAL6

@@ -10,5 +10,5 @@ create_flow_step -name init_design -owner design -write_db {
 
 create_flow_step -name init_floorplan -owner design {
   uplevel #0 source [get_flowkit_db init_flow_directory]/floorplan.tcl
-  uplevel #0 source [get_flowkit_db init_flow_directory]/power_plan.tcl
+  uplevel #0 source $::PR_POWER_PLAN_SCRIPT
 }
