@@ -85,7 +85,9 @@ set pr_boot_rom [get_db insts -if {.base_cell.name == S018VM_X64Y16D64_PM}]
 if {[llength $pr_debug_rom] != 1 || [llength $pr_boot_rom] != 1} {
   error "Expected one debug ROM and one boot ROM (got [llength $pr_debug_rom], [llength $pr_boot_rom])"
 }
-placeInstance [lindex $pr_debug_rom 0] 2650 1800 R0 -fixed
+# The debug ROM is 898um wide.  Leave a 123um channel to the right core edge
+# for M6 PG, macro-pin escape, and signal detours instead of the former 23um.
+placeInstance [lindex $pr_debug_rom 0] 2550 1800 R0 -fixed
 # Keep the 898 x 160 um boot ROM within the 3400 um core.  x=2800 placed its
 # right edge beyond the core boundary, where it overlapped the vertical M6
 # core ring and generated PG/obstruction conflicts.  x=2600 retains a 73 um
