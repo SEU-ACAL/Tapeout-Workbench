@@ -42,3 +42,17 @@
 # 		*/OAI32V2_*  \
 # 		*/TBUF* \
 # " ]
+
+# Preserve foundry IO wrappers through synthesis.  Without this protection
+# DC can constant-propagate the input-enable mux and collapse a PIR-backed
+# input cell into `assign io_i = io_pad`, leaving no physical IO cell for P&R.
+foreach io_wrapper {
+    SMIC180DigitalInIOCell*
+    SMIC180DigitalOutIOCell*
+    SMIC180DigitalGPIOCell*
+} {
+    set io_cells [get_cells -hierarchical -filter "ref_name =~ $io_wrapper"]
+    if {[sizeof_collection $io_cells] > 0} {
+        set_dont_touch $io_cells
+    }
+}
