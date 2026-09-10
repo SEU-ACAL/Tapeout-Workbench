@@ -60,14 +60,6 @@ current_design  $TOP_MODULE
 link
 
 
-set_units \
-    -time ns \
-    -capacitance pF \
-    -resistance ohm \
-    -voltage V \
-    -current uA \
-    -power uW
-###
 source -e -v ./scripts/constraint_core.tcl
 source -e -v ./scripts/set_false_path.tcl
 
