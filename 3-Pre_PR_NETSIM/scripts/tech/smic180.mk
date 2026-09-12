@@ -4,6 +4,7 @@ $(error Unsupported CORNER '$(CORNER)'; expected ss, tt, or ff)
 endif
 TECH_STD_CELL_MODEL ?= /data2/smic180/SCC018UG_UHD_RVT_V0.4a/SCC018UG_UHD_RVT_V0p4a/verilog/scc018ug_uhd_rvt.v
 TECH_IO_CELL_MODEL ?= /data2/smic180/SP018RP_V1p0b/verilog/SP018RP_V1p1.v
+TECH_GTECH_MODEL_FILES ?= /data2/tools/syn/R-2020.09-SP5/packages/gtech/src_ver/GTECH_NOT.v /data2/tools/syn/R-2020.09-SP5/packages/gtech/src_ver/GTECH_AND2.v
 TECH_SRAM_ROOT ?= /data2/smic180/SRAM/S018SP_v0p1pc_CDK/SMIC180_S018SP_v0p1c_20260722
 ifeq ($(CORNER),ss)
 TECH_SRAM_CORNER ?= ss_1.62_125

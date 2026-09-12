@@ -97,6 +97,12 @@ fi
   fi
   cat "${SRAM_FILELIST}"
   cat "${ROM_FILELIST}"
+  if [[ -n "${GTECH_MODEL_FILES:-}" ]]; then
+    for gtech_model in ${GTECH_MODEL_FILES}; do
+      [[ -f "${gtech_model}" ]] || { echo "Missing GTECH Verilog model: ${gtech_model}" >&2; exit 2; }
+      printf '%s\n' "${gtech_model}"
+    done
+  fi
 } > "${GLS_FILELIST}"
 
 printf 'Generated GLS filelist: %s\n' "${GLS_FILELIST}"
