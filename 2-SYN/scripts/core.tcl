@@ -18,7 +18,7 @@ puts "Formality SVF output: $svf_output"
 
 set_host_options -max_cores 16
 set compile_enable_register_merging    true
-set compile_seqmap_propagate_constants false
+set compile_seqmap_propagate_constants true
 set verilogout_no_tri   "true"
 set verilogout_equation "false"
 set mv_default_level_shifter_voltage_range_infinity true
@@ -105,6 +105,10 @@ source -e -v ./scripts/operation_conditions.tcl
 
 compile_ultra -area_high_effort_script -no_autoungroup  -no_boundary_optimization  
 ##compile_ultra -timing_high_effort_script -no_autoungroup  -no_boundary_optimization -incremental
+
+# DC R-2020.09 ignores -area_high_effort_script on compile_ultra.  Run its
+# supported post-compile area pass before reporting and writing the netlist.
+optimize_netlist -area
 
 # Retiming is restricted to designs marked with set_optimize_registers.  Keep
 # the eligibility diagnostics with this run so blocked registers are visible.
